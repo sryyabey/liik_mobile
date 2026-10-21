@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bagla_mobile/widgets/theme_tier_badge.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,22 +19,36 @@ class _LinkMeta {
   const _LinkMeta(this.title, this.color, this.icon);
 }
 
-const Map<int, _LinkMeta> _kLinkTypes = {
-  1:  _LinkMeta('Facebook',    Color(0xFF1877F2), Icons.facebook_outlined),
-  2:  _LinkMeta('Instagram',   Color(0xFFE1306C), Icons.camera_alt_outlined),
-  3:  _LinkMeta('Twitter / X', Color(0xFF000000), Icons.alternate_email),
-  4:  _LinkMeta('LinkedIn',    Color(0xFF0077B5), Icons.work_outline),
-  5:  _LinkMeta('YouTube',     Color(0xFFFF0000), Icons.play_circle_outline),
-  6:  _LinkMeta('TikTok',      Color(0xFF010101), Icons.music_note_outlined),
-  9:  _LinkMeta('E-posta',     Color(0xFF6B7280), Icons.email_outlined),
-  10: _LinkMeta('Telefon',     Color(0xFF10B981), Icons.phone_outlined),
-  11: _LinkMeta('WhatsApp',    Color(0xFF25D366), Icons.chat_outlined),
-  12: _LinkMeta('Telegram',    Color(0xFF2CA5E0), Icons.send_outlined),
-  13: _LinkMeta('Konum',       Color(0xFFEA4335), Icons.location_on_outlined),
-  14: _LinkMeta('Web Sitesi',  Color(0xFF3B82F6), Icons.language_outlined),
-  32: _LinkMeta('Zoom',        Color(0xFF2D8CFF), Icons.video_call_outlined),
-  39: _LinkMeta('Threads',     Color(0xFF000000), Icons.tag_outlined),
-};
+Map<int, _LinkMeta> _linkTypes(BuildContext context) => {
+      1: const _LinkMeta(
+          'Facebook', const Color(0xFF1877F2), Icons.facebook_outlined),
+      2: const _LinkMeta(
+          'Instagram', const Color(0xFFE1306C), Icons.camera_alt_outlined),
+      3: const _LinkMeta(
+          'Twitter / X', const Color(0xFF000000), Icons.alternate_email),
+      4: const _LinkMeta(
+          'LinkedIn', const Color(0xFF0077B5), Icons.work_outline),
+      5: const _LinkMeta(
+          'YouTube', const Color(0xFFFF0000), Icons.play_circle_outline),
+      6: const _LinkMeta(
+          'TikTok', const Color(0xFF010101), Icons.music_note_outlined),
+      9: _LinkMeta(AppLocalizations.of(context).emailLabel,
+          const Color(0xFF6B7280), Icons.email_outlined),
+      10: _LinkMeta(AppLocalizations.of(context).customersPhone,
+          const Color(0xFF10B981), Icons.phone_outlined),
+      11: const _LinkMeta(
+          'WhatsApp', const Color(0xFF25D366), Icons.chat_outlined),
+      12: const _LinkMeta(
+          'Telegram', const Color(0xFF2CA5E0), Icons.send_outlined),
+      13: _LinkMeta(AppLocalizations.of(context).linkLocation,
+          const Color(0xFFEA4335), Icons.location_on_outlined),
+      14: _LinkMeta(AppLocalizations.of(context).linkWebsite,
+          const Color(0xFF3B82F6), Icons.language_outlined),
+      32: const _LinkMeta(
+          'Zoom', const Color(0xFF2D8CFF), Icons.video_call_outlined),
+      39: const _LinkMeta(
+          'Threads', const Color(0xFF000000), Icons.tag_outlined),
+    };
 
 // ─── Sayfa ───────────────────────────────────────────────────────────────────
 
@@ -47,77 +62,91 @@ class AiProfilePage extends StatefulWidget {
 class _AiProfilePageState extends State<AiProfilePage>
     with TickerProviderStateMixin {
   // ── Renkler ─────────────────────────────────────────────────────────────────
-  static const Color _primary   = Color(0xFF6366F1);
-  static const Color _bg        = Color(0xFFF3F4F8);
-  static const Color _darkBg    = Color(0xFF0D0B1E);
-  static const Color _darkCard  = Color(0xFF1A1730);
-  static const Color _aiAccent  = Color(0xFFA78BFA);
+  static const Color _primary = Color(0xFF0866EB);
+  static const Color _bg = Color(0xFFFAFBFD);
+  static const Color _darkBg = Color(0xFF0C1429);
+  static const Color _darkCard = Color(0xFF172239);
+  static const Color _aiAccent = Color(0xFFA78BFA);
 
   // ── Animasyon ────────────────────────────────────────────────────────────────
   late final AnimationController _glowCtrl;
-  late final Animation<double>   _glowAnim;
+  late final Animation<double> _glowAnim;
 
   late final TabController _tabController;
 
   // ── Yükleme durumu ──────────────────────────────────────────────────────────
-  bool _loading  = true;
+  bool _loading = true;
   String? _error;
 
   // ── AI Üret form ────────────────────────────────────────────────────────────
   final _generateFormKey = GlobalKey<FormState>();
   List<String> _professions = [];
+  String? _professionLocale;
+  int _professionRequest = 0;
   String? _selectedProfession;
-  final _uzmanlikCtrl    = TextEditingController();
-  final _hedefKitleCtrl  = TextEditingController();
-  final _deneyimCtrl     = TextEditingController();
-  final _basariCtrl      = TextEditingController();
-  final _ekNotCtrl       = TextEditingController();
-  String _selectedTon    = 'samimi';
+  final _uzmanlikCtrl = TextEditingController();
+  final _hedefKitleCtrl = TextEditingController();
+  final _deneyimCtrl = TextEditingController();
+  final _basariCtrl = TextEditingController();
+  final _ekNotCtrl = TextEditingController();
+  String _selectedTon = 'samimi';
   static const List<String> _tonOptions = ['samimi', 'profesyonel', 'sıcak'];
-  static const Map<String, (String, String, String)> _tonMeta = {
-    // key: (emoji, label, açıklama)
-    'samimi':       ('😊', 'Samimi',       'Sıcak, doğal bir dil'),
-    'profesyonel':  ('💼', 'Profesyonel',  'Resmi, güven veren'),
-    'sıcak':        ('🤝', 'Sıcak',        'Empati odaklı, yakın'),
-  };
+  Map<String, (String, String, String)> get _tonMeta => {
+        // key: (emoji, label, açıklama)
+        'samimi': (
+          '😊',
+          AppLocalizations.of(context).aiToneFriendly,
+          AppLocalizations.of(context).aiToneFriendlyHint
+        ),
+        'profesyonel': (
+          '💼',
+          AppLocalizations.of(context).aiToneProfessional,
+          AppLocalizations.of(context).aiToneProfessionalHint
+        ),
+        'sıcak': (
+          '🤝',
+          AppLocalizations.of(context).aiToneWarm,
+          AppLocalizations.of(context).aiToneWarmHint
+        ),
+      };
 
   // ── Üretilen / düzenlenebilir çıktı ─────────────────────────────────────────
-  final _descCtrl        = TextEditingController();
-  final _footerCtrl      = TextEditingController();
-  final _seoTitleCtrl    = TextEditingController();
-  final _seoDescCtrl     = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _footerCtrl = TextEditingController();
+  final _seoTitleCtrl = TextEditingController();
+  final _seoDescCtrl = TextEditingController();
   final _seoKeywordsCtrl = TextEditingController();
 
-  int  _remainingGenerations = 0;
-  bool _generating           = false;
-  bool _generateSuccess      = false;
-  bool _saving               = false;
+  int _remainingGenerations = 0;
+  bool _generating = false;
+  bool _generateSuccess = false;
+  bool _saving = false;
   Map<String, String> _fieldErrors = {};
 
   // ── Üretim animasyonu ────────────────────────────────────────────────────────
-  int    _msgIndex  = 0;
+  int _msgIndex = 0;
   Timer? _msgTimer;
   late final AnimationController _successCtrl;
-  late final Animation<double>   _successScale;
+  late final Animation<double> _successScale;
 
   AppLocalizations get loc => AppLocalizations.of(context);
   List<String> get _generatingMsgs => [
-    loc.aiProfileMsgAnalyzing,
-    loc.aiProfileMsgPreparing,
-    loc.aiProfileMsgSelecting,
-    loc.aiProfileMsgSeo,
-    loc.aiProfileMsgFinalizing,
-  ];
+        loc.aiProfileMsgAnalyzing,
+        loc.aiProfileMsgPreparing,
+        loc.aiProfileMsgSelecting,
+        loc.aiProfileMsgSeo,
+        loc.aiProfileMsgFinalizing,
+      ];
 
   // ── Tema ────────────────────────────────────────────────────────────────────
   List<Map<String, dynamic>> _themes = [];
-  int?    _selectedThemeId;
-  int?    _savedThemeId;      // son başarıyla kaydedilen tema
-  int?    _userId;
+  int? _selectedThemeId;
+  int? _savedThemeId; // son başarıyla kaydedilen tema
+  int? _userId;
   String? _userSlug;
-  bool    _savingTheme       = false;
+  bool _savingTheme = false;
   WebViewController? _previewController;
-  bool    _previewLoading    = false;
+  bool _previewLoading = false;
   String? _previewUrl;
   String? _previewError;
   String? _previewLastVisitedUrl;
@@ -125,7 +154,7 @@ class _AiProfilePageState extends State<AiProfilePage>
   // ── Linkler ─────────────────────────────────────────────────────────────────
   // type_id → {url, title, is_active}
   final Map<int, Map<String, dynamic>> _linkState = {};
-  List<int> _linkOrder = [];   // aktif linklerin görüntülenme sırası
+  List<int> _linkOrder = []; // aktif linklerin görüntülenme sırası
   bool _savingLinks = false;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
@@ -145,8 +174,59 @@ class _AiProfilePageState extends State<AiProfilePage>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _successScale = CurvedAnimation(parent: _successCtrl, curve: Curves.elasticOut);
+    _successScale =
+        CurvedAnimation(parent: _successCtrl, curve: Curves.elasticOut);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final previous = _professionLocale;
+    _professionLocale = locale;
+    if (previous != null && previous != locale) {
+      _reloadProfessions(locale);
+    }
+  }
+
+  Future<void> _reloadProfessions(String locale) async {
+    final version = ++_professionRequest;
+    try {
+      final response = await authGet(
+        Uri.parse('$apiBaseUrl/api/professions')
+            .replace(queryParameters: {'locale': locale}),
+        headers: {'Accept': 'application/json'},
+      );
+      if (!mounted ||
+          version != _professionRequest ||
+          locale != _professionLocale) {
+        return;
+      }
+      if (response.statusCode != 200) {
+        throw Exception();
+      }
+      final professions =
+          (jsonDecode(response.body)['data'] as List).cast<String>();
+      final selected = _professions.indexOf(_selectedProfession ?? '');
+      setState(() {
+        _professions = professions;
+        _selectedProfession = selected >= 0 && selected < professions.length
+            ? professions[selected]
+            : null;
+      });
+    } catch (_) {
+      if (!mounted ||
+          version != _professionRequest ||
+          locale != _professionLocale) {
+        return;
+      }
+      // Avoid showing options from the previous language after a failed reload.
+      setState(() {
+        _professions = [];
+        _selectedProfession = null;
+      });
+    }
   }
 
   @override
@@ -171,11 +251,19 @@ class _AiProfilePageState extends State<AiProfilePage>
   // ─── API: GET /api/ai-profile ────────────────────────────────────────────────
 
   Future<void> _loadData() async {
-    setState(() { _loading = true; _error = null; });
+    if (!mounted) {
+      return;
+    }
+    final requestLocale = Localizations.localeOf(context).toLanguageTag();
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       final res = await authGet(
-        Uri.parse('$apiBaseUrl/api/ai-profile'),
+        Uri.parse('$apiBaseUrl/api/ai-profile')
+            .replace(queryParameters: {'locale': requestLocale}),
         headers: {'Accept': 'application/json'},
       );
 
@@ -183,17 +271,22 @@ class _AiProfilePageState extends State<AiProfilePage>
         final root = jsonDecode(res.body) as Map<String, dynamic>;
         final data = (root['data'] as Map?)?.cast<String, dynamic>() ?? root;
 
-        final profile     = (data['profile']        as Map?)?.cast<String, dynamic>() ?? {};
-        final seo         = (data['seo']            as Map?)?.cast<String, dynamic>() ?? {};
+        final profile =
+            (data['profile'] as Map?)?.cast<String, dynamic>() ?? {};
+        final seo = (data['seo'] as Map?)?.cast<String, dynamic>() ?? {};
         // existing_links may be a List (empty) or a Map (keyed by type_id)
         final rawLinksRaw = data['existing_links'];
-        final rawLinks    = rawLinksRaw is Map
+        final rawLinks = rawLinksRaw is Map
             ? rawLinksRaw.cast<String, dynamic>()
             : <String, dynamic>{};
-        final themes      = (data['themes'] as List? ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        final themes = (data['themes'] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
         final currentTheme = data['current_theme_id'] as int?;
-        final remaining   = data['remaining_generations'] as int? ?? 0;
-        final professions = (data['professions'] as List? ?? []).map((e) => e.toString()).toList();
+        final remaining = data['remaining_generations'] as int? ?? 0;
+        final professions = (data['professions'] as List? ?? [])
+            .map((e) => e.toString())
+            .toList();
 
         // link state'i kur
         final newLinkState = <int, Map<String, dynamic>>{};
@@ -201,8 +294,9 @@ class _AiProfilePageState extends State<AiProfilePage>
           final m = Map<String, dynamic>.from(val as Map);
           final tid = m['type_id'] as int? ?? int.tryParse(key) ?? 0;
           newLinkState[tid] = {
-            'url':       m['url']?.toString() ?? '',
-            'title':     m['title']?.toString() ?? (_kLinkTypes[tid]?.title ?? ''),
+            'url': m['url']?.toString() ?? '',
+            'title': m['title']?.toString() ??
+                (_linkTypes(context)[tid]?.title ?? ''),
             'is_active': m['is_active'] as bool? ?? false,
           };
         });
@@ -218,43 +312,62 @@ class _AiProfilePageState extends State<AiProfilePage>
           if (profileRes.statusCode == 200) {
             final pd = jsonDecode(profileRes.body) as Map<String, dynamic>;
             final pd2 = (pd['data'] as Map?)?.cast<String, dynamic>() ?? pd;
-            userId   = pd2['id'] as int? ?? pd2['user_id'] as int?;
+            userId = pd2['id'] as int? ?? pd2['user_id'] as int?;
             userSlug = pd2['username']?.toString() ?? pd2['slug']?.toString();
           }
         } catch (_) {}
 
+        if (!mounted) {
+          return;
+        }
         setState(() {
-          _professions           = professions;
-          _themes                = themes;
-          _selectedThemeId       = currentTheme;
-          _savedThemeId          = currentTheme;
-          _remainingGenerations  = remaining;
-          _userId                = userId;
-          _userSlug              = userSlug;
+          if (requestLocale == _professionLocale) {
+            _professions = professions;
+          }
+          _themes = themes;
+          _selectedThemeId = currentTheme;
+          _savedThemeId = currentTheme;
+          _remainingGenerations = remaining;
+          _userId = userId;
+          _userSlug = userSlug;
           _linkState
             ..clear()
             ..addAll(newLinkState);
           // Aktif linkleri önce, sonra pasifler
           _linkOrder = [
-            ...newLinkState.keys.where((id) => newLinkState[id]!['is_active'] == true),
-            ...newLinkState.keys.where((id) => newLinkState[id]!['is_active'] != true),
-            ..._kLinkTypes.keys.where((id) => !newLinkState.containsKey(id)),
+            ...newLinkState.keys
+                .where((id) => newLinkState[id]!['is_active'] == true),
+            ...newLinkState.keys
+                .where((id) => newLinkState[id]!['is_active'] != true),
+            ..._linkTypes(context)
+                .keys
+                .where((id) => !newLinkState.containsKey(id)),
           ];
 
-          _descCtrl.text   = profile['description']?.toString() ?? '';
+          _descCtrl.text = profile['description']?.toString() ?? '';
           _footerCtrl.text = profile['footer']?.toString() ?? '';
-          _seoTitleCtrl.text    = seo['title']?.toString() ?? '';
-          _seoDescCtrl.text     = seo['description']?.toString() ?? '';
+          _seoTitleCtrl.text = seo['title']?.toString() ?? '';
+          _seoDescCtrl.text = seo['description']?.toString() ?? '';
           _seoKeywordsCtrl.text = seo['keywords']?.toString() ?? '';
         });
 
         _updatePreview();
       } else {
-        setState(() { _error = loc.aiProfileFetchError(res.statusCode); });
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _error = loc.aiProfileFetchError(res.statusCode);
+        });
       }
     } catch (e, st) {
       debugPrint('[AiProfilePage] _loadData error: $e\n$st');
-      setState(() { _error = loc.aiProfileConnectionError(e); });
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = loc.aiProfileConnectionError(e);
+      });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -266,7 +379,12 @@ class _AiProfilePageState extends State<AiProfilePage>
     if (!_generateFormKey.currentState!.validate()) return;
 
     // Mesaj döngüsü başlat
-    setState(() { _generating = true; _generateSuccess = false; _fieldErrors = {}; _msgIndex = 0; });
+    setState(() {
+      _generating = true;
+      _generateSuccess = false;
+      _fieldErrors = {};
+      _msgIndex = 0;
+    });
     _msgTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
       setState(() => _msgIndex = (_msgIndex + 1) % _generatingMsgs.length);
@@ -275,15 +393,18 @@ class _AiProfilePageState extends State<AiProfilePage>
     try {
       final res = await authPost(
         Uri.parse('$apiBaseUrl/api/ai-profile/generate'),
-        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: jsonEncode({
-          'meslek':       _selectedProfession,
-          'uzmanlik':     _uzmanlikCtrl.text.trim(),
-          'deneyim':      int.tryParse(_deneyimCtrl.text.trim()) ?? 0,
-          'hedef_kitle':  _hedefKitleCtrl.text.trim(),
-          'ton':          _selectedTon,
-          'basari':       _basariCtrl.text.trim(),
-          'ek_not':       _ekNotCtrl.text.trim(),
+          'meslek': _selectedProfession,
+          'uzmanlik': _uzmanlikCtrl.text.trim(),
+          'deneyim': int.tryParse(_deneyimCtrl.text.trim()) ?? 0,
+          'hedef_kitle': _hedefKitleCtrl.text.trim(),
+          'ton': _selectedTon,
+          'basari': _basariCtrl.text.trim(),
+          'ek_not': _ekNotCtrl.text.trim(),
         }),
       );
 
@@ -293,21 +414,27 @@ class _AiProfilePageState extends State<AiProfilePage>
       if (res.statusCode == 200 && body != null) {
         _msgTimer?.cancel();
         setState(() {
-          _descCtrl.text        = body['description']?.toString() ?? '';
-          _footerCtrl.text      = body['footer']?.toString() ?? '';
-          _seoTitleCtrl.text    = body['seo_title']?.toString() ?? '';
-          _seoDescCtrl.text     = body['seo_description']?.toString() ?? '';
+          _descCtrl.text = body['description']?.toString() ?? '';
+          _footerCtrl.text = body['footer']?.toString() ?? '';
+          _seoTitleCtrl.text = body['seo_title']?.toString() ?? '';
+          _seoDescCtrl.text = body['seo_description']?.toString() ?? '';
           _seoKeywordsCtrl.text = body['seo_keywords']?.toString() ?? '';
-          _remainingGenerations = body['remaining_generations'] as int? ?? _remainingGenerations - 1;
+          _remainingGenerations = body['remaining_generations'] as int? ??
+              _remainingGenerations - 1;
           _generateSuccess = true;
           _generating = false;
         });
         _successCtrl.forward(from: 0);
         // 1.8 saniye başarı göster, sonra overlay kapat
         await Future.delayed(const Duration(milliseconds: 1800));
-        if (mounted) setState(() { _generateSuccess = false; });
+        if (mounted)
+          setState(() {
+            _generateSuccess = false;
+          });
       } else if (res.statusCode == 429) {
-        final msg = body?['error']?.toString() ?? root?['message']?.toString() ?? 'Günlük AI limitine ulaştınız.';
+        final msg = body?['error']?.toString() ??
+            root?['message']?.toString() ??
+            AppLocalizations.of(context).aiProfileLimitReached;
         final rem = body?['remaining_generations'] as int? ?? 0;
         setState(() => _remainingGenerations = rem);
         _snack(msg);
@@ -321,13 +448,18 @@ class _AiProfilePageState extends State<AiProfilePage>
         });
         _snack(loc.aiProfileValidationErrors);
       } else {
-        _snack(root?['message']?.toString() ?? loc.aiProfileGenerateHttpError(res.statusCode));
+        _snack(root?['message']?.toString() ??
+            loc.aiProfileGenerateHttpError(res.statusCode));
       }
     } catch (e) {
       _snack(loc.aiProfileConnectionError(e));
     } finally {
       _msgTimer?.cancel();
-      if (mounted) setState(() { _generating = false; _generateSuccess = false; });
+      if (mounted)
+        setState(() {
+          _generating = false;
+          _generateSuccess = false;
+        });
     }
   }
 
@@ -338,18 +470,24 @@ class _AiProfilePageState extends State<AiProfilePage>
       _snack(loc.aiProfileSaveBioMin);
       return;
     }
-    setState(() { _saving = true; _fieldErrors = {}; });
+    setState(() {
+      _saving = true;
+      _fieldErrors = {};
+    });
 
     try {
       final res = await authPost(
         Uri.parse('$apiBaseUrl/api/ai-profile/save'),
-        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: jsonEncode({
-          'description':     _descCtrl.text.trim(),
-          'footer':          _footerCtrl.text.trim(),
-          'seo_title':       _seoTitleCtrl.text.trim(),
+          'description': _descCtrl.text.trim(),
+          'footer': _footerCtrl.text.trim(),
+          'seo_title': _seoTitleCtrl.text.trim(),
           'seo_description': _seoDescCtrl.text.trim(),
-          'seo_keywords':    _seoKeywordsCtrl.text.trim(),
+          'seo_keywords': _seoKeywordsCtrl.text.trim(),
         }),
       );
 
@@ -368,7 +506,8 @@ class _AiProfilePageState extends State<AiProfilePage>
         });
         _snack(loc.aiProfileValidationErrors);
       } else {
-        _snack(body?['message']?.toString() ?? loc.aiProfileSaveHttpError(res.statusCode));
+        _snack(body?['message']?.toString() ??
+            loc.aiProfileSaveHttpError(res.statusCode));
       }
     } catch (e) {
       _snack(loc.aiProfileConnectionError(e));
@@ -380,13 +519,19 @@ class _AiProfilePageState extends State<AiProfilePage>
   // ─── API: POST /api/ai-profile/theme ────────────────────────────────────────
 
   Future<void> _saveTheme(int themeId) async {
-    setState(() { _selectedThemeId = themeId; _savingTheme = true; });
+    setState(() {
+      _selectedThemeId = themeId;
+      _savingTheme = true;
+    });
     _updatePreview();
 
     try {
       final res = await authPost(
         Uri.parse('$apiBaseUrl/api/ai-profile/theme'),
-        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: jsonEncode({'theme_id': themeId}),
       );
 
@@ -395,7 +540,8 @@ class _AiProfilePageState extends State<AiProfilePage>
         setState(() => _savedThemeId = themeId);
         _snack(body?['message']?.toString() ?? loc.aiProfileThemeApplied);
       } else {
-        _snack(body?['message']?.toString() ?? loc.aiProfileThemeHttpError(res.statusCode));
+        _snack(body?['message']?.toString() ??
+            loc.aiProfileThemeHttpError(res.statusCode));
       }
     } catch (e) {
       _snack(loc.aiProfileConnectionError(e));
@@ -408,19 +554,18 @@ class _AiProfilePageState extends State<AiProfilePage>
 
   String? _buildPreviewUrl() {
     if (_userId == null || _selectedThemeId == null) return null;
-    return Uri.parse('https://bagla.app/bio-pages/preview/$_userId')
-        .replace(queryParameters: {'theme': _selectedThemeId!.toString()})
-        .toString();
+    return Uri.parse('$apiBaseUrl/bio-pages/preview/$_userId').replace(
+        queryParameters: {'theme': _selectedThemeId!.toString()}).toString();
   }
 
   void _updatePreview() {
     final url = _buildPreviewUrl();
     if (url == null) {
       setState(() {
-        _previewUrl        = null;
+        _previewUrl = null;
         _previewController = null;
-        _previewError      = null;
-        _previewLoading    = false;
+        _previewError = null;
+        _previewLoading = false;
         _previewLastVisitedUrl = null;
       });
       return;
@@ -431,31 +576,45 @@ class _AiProfilePageState extends State<AiProfilePage>
       ..setBackgroundColor(Colors.transparent)
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (u) {
-          if (mounted) setState(() { _previewLastVisitedUrl = u; });
+          if (mounted)
+            setState(() {
+              _previewLastVisitedUrl = u;
+            });
         },
         onNavigationRequest: (req) {
-          if (mounted) setState(() { _previewLastVisitedUrl = req.url; });
+          if (mounted)
+            setState(() {
+              _previewLastVisitedUrl = req.url;
+            });
           return NavigationDecision.navigate;
         },
         onPageFinished: (u) {
-          if (mounted) setState(() { _previewLoading = false; _previewLastVisitedUrl = u; });
+          if (mounted)
+            setState(() {
+              _previewLoading = false;
+              _previewLastVisitedUrl = u;
+            });
         },
         onWebResourceError: (err) {
           final failUrl = err.url ?? _previewLastVisitedUrl ?? url;
-          if (mounted) { setState(() {
-            _previewLoading = false;
-            _previewLastVisitedUrl = failUrl;
-            _previewError = 'Önizleme yüklenemedi.\n${err.description}';
-          }); }
+          if (mounted) {
+            setState(() {
+              _previewLoading = false;
+              _previewLastVisitedUrl = failUrl;
+              _previewError = loc.previewLoadError(err.description);
+            });
+          }
         },
       ))
-      ..loadRequest(Uri.parse(url));
+      ..loadRequest(Uri.parse(url), headers: {
+        'Accept-Language': Localizations.localeOf(context).toLanguageTag(),
+      });
 
     setState(() {
-      _previewUrl        = url;
+      _previewUrl = url;
       _previewController = controller;
-      _previewLoading    = true;
-      _previewError      = null;
+      _previewLoading = true;
+      _previewError = null;
       _previewLastVisitedUrl = url;
     });
   }
@@ -465,20 +624,20 @@ class _AiProfilePageState extends State<AiProfilePage>
   Future<void> _saveLinks() async {
     setState(() => _savingLinks = true);
 
-    final links         = <Map<String, dynamic>>[];
+    final links = <Map<String, dynamic>>[];
     final deactivateIds = <int>[];
 
     // Sıraya göre işle (aktif linkler önce ve kullanıcı sıralamasında)
-    final orderedIds = _linkOrder.isNotEmpty
-        ? _linkOrder
-        : _linkState.keys.toList();
+    final orderedIds =
+        _linkOrder.isNotEmpty ? _linkOrder : _linkState.keys.toList();
 
     for (final typeId in orderedIds) {
-      final data   = _linkState[typeId];
+      final data = _linkState[typeId];
       if (data == null) continue;
-      final url    = (data['url'] as String? ?? '').trim();
+      final url = (data['url'] as String? ?? '').trim();
       final active = data['is_active'] as bool? ?? false;
-      final title  = data['title'] as String? ?? _kLinkTypes[typeId]?.title ?? '';
+      final title =
+          data['title'] as String? ?? _linkTypes(context)[typeId]?.title ?? '';
 
       if (url.isNotEmpty && active) {
         links.add({'type_id': typeId, 'url': url, 'title': title});
@@ -490,7 +649,10 @@ class _AiProfilePageState extends State<AiProfilePage>
     try {
       final res = await authPost(
         Uri.parse('$apiBaseUrl/api/ai-profile/links'),
-        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: jsonEncode({'links': links, 'deactivate_ids': deactivateIds}),
       );
 
@@ -498,7 +660,8 @@ class _AiProfilePageState extends State<AiProfilePage>
       if (res.statusCode == 200) {
         _snack(body?['message']?.toString() ?? loc.aiProfileLinksSaved);
       } else {
-        _snack(body?['message']?.toString() ?? loc.aiProfileLinksHttpError(res.statusCode));
+        _snack(body?['message']?.toString() ??
+            loc.aiProfileLinksHttpError(res.statusCode));
       }
     } catch (e) {
       _snack(loc.aiProfileConnectionError(e));
@@ -510,7 +673,11 @@ class _AiProfilePageState extends State<AiProfilePage>
   // ─── Yardımcılar ─────────────────────────────────────────────────────────────
 
   Map<String, dynamic>? _tryDecode(String body) {
-    try { return jsonDecode(body) as Map<String, dynamic>?; } catch (_) { return null; }
+    try {
+      return jsonDecode(body) as Map<String, dynamic>?;
+    } catch (_) {
+      return null;
+    }
   }
 
   void _snack(String msg) {
@@ -521,11 +688,11 @@ class _AiProfilePageState extends State<AiProfilePage>
   InputDecoration _inputDeco(String label, {String? errorText, String? hint}) {
     return InputDecoration(
       labelText: label,
-      hintText:  hint,
+      hintText: hint,
       errorText: errorText,
       labelStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
       errorStyle: const TextStyle(fontSize: 11),
-      filled:    true,
+      filled: true,
       fillColor: const Color(0xFFF9FAFB),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       enabledBorder: OutlineInputBorder(
@@ -548,13 +715,14 @@ class _AiProfilePageState extends State<AiProfilePage>
   }
 
   // Normal kart (Çıktı, SEO, Linkler)
-  Widget _card({required String title, required IconData icon, required Widget child}) {
+  Widget _card(
+      {required String title, required IconData icon, required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 12, offset: Offset(0, 3))],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5EAF1)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -564,13 +732,19 @@ class _AiProfilePageState extends State<AiProfilePage>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF7C3AED)]),
+                gradient: const LinearGradient(
+                    colors: [Color(0xFF0866EB), Color(0xFF7C3AED)]),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, size: 14, color: Colors.white),
             ),
             const SizedBox(width: 10),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF1E1E2D))),
+            Expanded(
+                child: Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Color(0xFF0C2032)))),
           ]),
           const SizedBox(height: 14),
           child,
@@ -586,7 +760,7 @@ class _AiProfilePageState extends State<AiProfilePage>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF7C3AED), Color(0xFF9333EA)],
+          colors: [Color(0xFF0866EB), Color(0xFF7C3AED), Color(0xFF9333EA)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -607,13 +781,15 @@ class _AiProfilePageState extends State<AiProfilePage>
 
   void _openBioPreview() {
     if (_userSlug == null) {
-      _snack('Kullanıcı bilgisi henüz yüklenmedi.');
+      _snack(AppLocalizations.of(context).aiProfileThemeNoUser);
       return;
     }
-    final url = 'https://bagla.app/@$_userSlug';
+    final url = Uri.parse(apiBaseUrl).replace(path: '/@$_userSlug').toString();
     final ctrl = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(url));
+      ..loadRequest(Uri.parse(url), headers: {
+        'Accept-Language': Localizations.localeOf(context).toLanguageTag(),
+      });
 
     showModalBottomSheet(
       context: context,
@@ -636,7 +812,8 @@ class _AiProfilePageState extends State<AiProfilePage>
                 child: Column(
                   children: [
                     Container(
-                      width: 40, height: 4,
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
                         color: const Color(0xFFE5E7EB),
                         borderRadius: BorderRadius.circular(2),
@@ -649,7 +826,7 @@ class _AiProfilePageState extends State<AiProfilePage>
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF9333EA)],
+                              colors: [Color(0xFF0866EB), Color(0xFF9333EA)],
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -657,12 +834,14 @@ class _AiProfilePageState extends State<AiProfilePage>
                               color: Colors.white, size: 14),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Bio Sayfası Önizleme',
-                                  style: TextStyle(
+                              Text(
+                                  AppLocalizations.of(context)
+                                      .aiProfileBioPreview,
+                                  style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 15)),
                             ],
@@ -703,29 +882,37 @@ class _AiProfilePageState extends State<AiProfilePage>
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         SliverAppBar(
-          expandedHeight: 160,
+          expandedHeight:
+              MediaQuery.textScalerOf(context).scale(14) > 20 ? 255 : 200,
           pinned: true,
           backgroundColor: _darkBg,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 19, color: Colors.white),
+            icon: const Icon(Icons.arrow_back_ios_new,
+                size: 19, color: Colors.white),
             onPressed: () => Navigator.of(context).canPop()
                 ? Navigator.of(context).pop()
                 : Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const MainTabsPage(initialIndex: 0)), (_) => false),
+                    MaterialPageRoute(
+                        builder: (_) => const MainTabsPage(initialIndex: 0)),
+                    (_) => false),
           ),
           actions: const [],
           flexibleSpace: FlexibleSpaceBar(
             background: _buildAppBarHero(),
           ),
           bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.center,
             controller: _tabController,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white.withValues(alpha: 0.45),
             indicatorColor: _aiAccent,
             indicatorWeight: 2.5,
-            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+            labelStyle:
+                const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            unselectedLabelStyle:
+                const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
             tabs: [
               Tab(text: loc.aiProfileTabProfile),
               Tab(text: loc.aiProfileTabLinks),
@@ -755,7 +942,6 @@ class _AiProfilePageState extends State<AiProfilePage>
     );
   }
 
-
   Widget _buildGeneratingOverlay() {
     final isSuccess = _generateSuccess;
 
@@ -784,19 +970,25 @@ class _AiProfilePageState extends State<AiProfilePage>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF9333EA), Color(0xFF6366F1)],
+                colors: [
+                  Color(0xFF0866EB),
+                  Color(0xFF9333EA),
+                  Color(0xFF0866EB)
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: _glowAnim.value * 0.8),
+                  color: const Color(0xFF0866EB)
+                      .withValues(alpha: _glowAnim.value * 0.8),
                   blurRadius: 32,
                   spreadRadius: 4,
                 ),
               ],
             ),
-            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
+            child:
+                const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
           ),
         ),
         const SizedBox(height: 28),
@@ -889,12 +1081,13 @@ class _AiProfilePageState extends State<AiProfilePage>
               color: const Color(0xFF10B981).withValues(alpha: 0.15),
               border: Border.all(color: const Color(0xFF10B981), width: 2),
             ),
-            child: const Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 44),
+            child: const Icon(Icons.check_rounded,
+                color: Color(0xFF10B981), size: 44),
           ),
           const SizedBox(height: 20),
           Text(
             loc.aiProfileGenerateSuccess,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -942,7 +1135,7 @@ class _AiProfilePageState extends State<AiProfilePage>
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF0D0B1E), Color(0xFF1E1050), Color(0xFF2D1060)],
+          colors: [Color(0xFF0C1429), Color(0xFF152E5C), Color(0xFF2B2054)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -950,48 +1143,57 @@ class _AiProfilePageState extends State<AiProfilePage>
       child: Stack(
         children: [
           // Dekoratif ışık noktaları
-          Positioned(top: 30, right: 40,
-            child: _glowDot(20, _aiAccent.withValues(alpha: 0.15))),
-          Positioned(top: 60, right: 100,
-            child: _glowDot(10, Colors.white.withValues(alpha: 0.06))),
-          Positioned(top: 15, left: 60,
-            child: _glowDot(8, _aiAccent.withValues(alpha: 0.1))),
-          Positioned(bottom: 60, right: 30,
-            child: _glowDot(14, const Color(0xFF9333EA).withValues(alpha: 0.2))),
-          Positioned(bottom: 50, left: 30,
-            child: _glowDot(6, Colors.white.withValues(alpha: 0.07))),
+          Positioned(
+              top: 30,
+              right: 40,
+              child: _glowDot(20, _aiAccent.withValues(alpha: 0.15))),
+          Positioned(
+              top: 60,
+              right: 100,
+              child: _glowDot(10, Colors.white.withValues(alpha: 0.06))),
+          Positioned(
+              top: 15,
+              left: 60,
+              child: _glowDot(8, _aiAccent.withValues(alpha: 0.1))),
+          Positioned(
+              bottom: 60,
+              right: 30,
+              child:
+                  _glowDot(14, const Color(0xFF9333EA).withValues(alpha: 0.2))),
+          Positioned(
+              bottom: 50,
+              left: 30,
+              child: _glowDot(6, Colors.white.withValues(alpha: 0.07))),
 
           // İçerik
           Positioned(
-            left: 0, right: 0, bottom: 52,
+            left: 24,
+            right: 24,
+            bottom: 52,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // AI rozeti
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: _aiAccent.withValues(alpha: 0.4)),
-                    borderRadius: BorderRadius.circular(20),
-                    color: _aiAccent.withValues(alpha: 0.1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(width: 6, height: 6,
-                        decoration: const BoxDecoration(color: _aiAccent, shape: BoxShape.circle)),
-                      const SizedBox(width: 6),
-                      Text(loc.aiProfileAiBadge,
-                          style: TextStyle(color: _aiAccent, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                    ],
-                  ),
+                Image.asset(
+                  'assets/liik-logo-2.png',
+                  width: 112,
+                  height: 60,
+                  fit: BoxFit.contain,
+                  semanticLabel: 'Liik',
                 ),
                 const SizedBox(height: 8),
                 Text(loc.aiProfileTitle,
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5)),
                 const SizedBox(height: 4),
                 Text(loc.aiProfileSubtitle,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12)),
               ],
             ),
           ),
@@ -1002,7 +1204,8 @@ class _AiProfilePageState extends State<AiProfilePage>
 
   Widget _glowDot(double size, Color color) {
     return Container(
-      width: size, height: size,
+      width: size,
+      height: size,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
@@ -1018,15 +1221,18 @@ class _AiProfilePageState extends State<AiProfilePage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+              const Icon(Icons.error_outline,
+                  size: 48, color: Colors.redAccent),
               const SizedBox(height: 16),
-              Text(_error!, textAlign: TextAlign.center,
+              Text(_error!,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(color: Color(0xFF6B7280))),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _loadData,
                 style: ElevatedButton.styleFrom(backgroundColor: _primary),
-                child: Text(loc.aiProfileRetry, style: const TextStyle(color: Colors.white)),
+                child: Text(loc.aiProfileRetry,
+                    style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -1106,17 +1312,21 @@ class _AiProfilePageState extends State<AiProfilePage>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF9333EA)],
+                        colors: [Color(0xFF0866EB), Color(0xFF9333EA)],
                       ),
-                      boxShadow: canGenerate ? [
-                        BoxShadow(
-                          color: _primary.withValues(alpha: _glowAnim.value * 0.6),
-                          blurRadius: 16,
-                          spreadRadius: 2,
-                        ),
-                      ] : [],
+                      boxShadow: canGenerate
+                          ? [
+                              BoxShadow(
+                                color: _primary.withValues(
+                                    alpha: _glowAnim.value * 0.6),
+                                blurRadius: 16,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : [],
                     ),
-                    child: const Icon(Icons.auto_awesome, size: 18, color: Colors.white),
+                    child: const Icon(Icons.auto_awesome,
+                        size: 18, color: Colors.white),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1125,9 +1335,13 @@ class _AiProfilePageState extends State<AiProfilePage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(loc.aiProfileGenerateTitle,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16)),
                       Text(loc.aiProfileGenerateSubtitle,
-                          style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
+                          style: const TextStyle(
+                              color: const Color(0xFF9CA3AF), fontSize: 11)),
                     ],
                   ),
                 ),
@@ -1144,20 +1358,25 @@ class _AiProfilePageState extends State<AiProfilePage>
               items: _professions,
               error: _fieldErrors['meslek'],
               onChanged: (v) => setState(() => _selectedProfession = v),
-              validator: (v) => (v == null || v.isEmpty) ? loc.aiProfileFieldProfessionError : null,
+              validator: (v) => (v == null || v.isEmpty)
+                  ? loc.aiProfileFieldProfessionError
+                  : null,
             ),
             const SizedBox(height: 12),
 
             _aiField(_uzmanlikCtrl, loc.aiProfileFieldExpertise,
                 hint: loc.aiProfileFieldExpertiseHint,
                 error: _fieldErrors['uzmanlik'],
-                validator: (v) => v!.trim().isEmpty ? loc.aiProfileFieldExpertiseError : null),
+                validator: (v) => v!.trim().isEmpty
+                    ? loc.aiProfileFieldExpertiseError
+                    : null),
             const SizedBox(height: 12),
 
             _aiField(_hedefKitleCtrl, loc.aiProfileFieldAudience,
                 hint: loc.aiProfileFieldAudienceHint,
                 error: _fieldErrors['hedef_kitle'],
-                validator: (v) => v!.trim().isEmpty ? loc.aiProfileFieldAudienceError : null),
+                validator: (v) =>
+                    v!.trim().isEmpty ? loc.aiProfileFieldAudienceError : null),
             const SizedBox(height: 12),
 
             Row(children: [
@@ -1168,11 +1387,12 @@ class _AiProfilePageState extends State<AiProfilePage>
                     keyboard: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) {
-                      if (v == null || v.isEmpty) return null;
-                      final n = int.tryParse(v);
-                      if (n == null || n < 0 || n > 50) return loc.aiProfileFieldExperienceError;
-                      return null;
-                    }),
+                  if (v == null || v.isEmpty) return null;
+                  final n = int.tryParse(v);
+                  if (n == null || n < 0 || n > 50)
+                    return loc.aiProfileFieldExperienceError;
+                  return null;
+                }),
               ),
             ]),
             const SizedBox(height: 12),
@@ -1201,8 +1421,8 @@ class _AiProfilePageState extends State<AiProfilePage>
   Widget _buildRemainingPill() {
     // Toplam hak sabit 5 kabul ediyoruz; API'den gelen remaining üzerinden dolu/boş hesapla
     const total = 5;
-    final used  = (total - _remainingGenerations).clamp(0, total);
-    final has   = _remainingGenerations > 0;
+    final used = (total - _remainingGenerations).clamp(0, total);
+    final has = _remainingGenerations > 0;
 
     return AnimatedBuilder(
       animation: _glowAnim,
@@ -1234,7 +1454,8 @@ class _AiProfilePageState extends State<AiProfilePage>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: filled
-                        ? _aiAccent.withValues(alpha: _glowAnim.value * 0.4 + 0.6)
+                        ? _aiAccent.withValues(
+                            alpha: _glowAnim.value * 0.4 + 0.6)
                         : Colors.white.withValues(alpha: 0.15),
                   ),
                 ),
@@ -1271,7 +1492,9 @@ class _AiProfilePageState extends State<AiProfilePage>
             const Icon(Icons.lock_outline, size: 16, color: Color(0xFF6B7280)),
             const SizedBox(width: 8),
             Text(loc.aiProfileGenerateLocked,
-                style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w600)),
+                style: const TextStyle(
+                    color: const Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600)),
           ],
         ),
       );
@@ -1304,13 +1527,18 @@ class _AiProfilePageState extends State<AiProfilePage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (_generating)
-                const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
               else
                 const Icon(Icons.auto_awesome, size: 18, color: Colors.white),
               const SizedBox(width: 10),
               Text(
-                _generating ? loc.aiProfileGenerating : loc.aiProfileGenerateButton,
+                _generating
+                    ? loc.aiProfileGenerating
+                    : loc.aiProfileGenerateButton,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -1347,12 +1575,15 @@ class _AiProfilePageState extends State<AiProfilePage>
         labelText: label,
         hintText: hint,
         errorText: error,
-        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 13),
+        labelStyle:
+            TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
+        hintStyle:
+            TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 13),
         errorStyle: const TextStyle(fontSize: 11, color: Color(0xFFF87171)),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.06),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
@@ -1391,11 +1622,13 @@ class _AiProfilePageState extends State<AiProfilePage>
       decoration: InputDecoration(
         labelText: label,
         errorText: error,
-        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
+        labelStyle:
+            TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
         errorStyle: const TextStyle(fontSize: 11, color: Color(0xFFF87171)),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.06),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
@@ -1413,12 +1646,15 @@ class _AiProfilePageState extends State<AiProfilePage>
           borderSide: const BorderSide(color: Color(0xFFF87171), width: 1.5),
         ),
       ),
-      icon: Icon(Icons.keyboard_arrow_down, color: Colors.white.withValues(alpha: 0.4)),
-      items: items.map((i) => DropdownMenuItem(
-        value: i,
-        child: Text(displayText != null ? displayText(i) : i,
-            style: const TextStyle(color: Colors.white)),
-      )).toList(),
+      icon: Icon(Icons.keyboard_arrow_down,
+          color: Colors.white.withValues(alpha: 0.4)),
+      items: items
+          .map((i) => DropdownMenuItem(
+                value: i,
+                child: Text(displayText != null ? displayText(i) : i,
+                    style: const TextStyle(color: Colors.white)),
+              ))
+          .toList(),
       onChanged: onChanged,
       validator: validator,
     );
@@ -1433,14 +1669,14 @@ class _AiProfilePageState extends State<AiProfilePage>
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF0F0E1A), Color(0xFF1E1050), Color(0xFF2D1060)],
+              colors: [Color(0xFF0F0E1A), Color(0xFF152E5C), Color(0xFF2B2054)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.35),
+                color: const Color(0xFF0866EB).withValues(alpha: 0.35),
                 blurRadius: 20,
                 offset: const Offset(0, 6),
               ),
@@ -1465,9 +1701,9 @@ class _AiProfilePageState extends State<AiProfilePage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Dönüşüm Sayfam',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context).aiProfileConversionPage,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
@@ -1476,7 +1712,7 @@ class _AiProfilePageState extends State<AiProfilePage>
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Takipçileri randevuya dönüştür',
+                      AppLocalizations.of(context).aiProfileConversionHint,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.55),
                         fontSize: 12,
@@ -1499,15 +1735,15 @@ class _AiProfilePageState extends State<AiProfilePage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Görüntüle',
-                      style: TextStyle(
+                      AppLocalizations.of(context).commonView,
+                      style: const TextStyle(
                         color: _aiAccent,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded,
+                    const Icon(Icons.arrow_forward_rounded,
                         size: 13, color: _aiAccent),
                   ],
                 ),
@@ -1586,27 +1822,27 @@ class _AiProfilePageState extends State<AiProfilePage>
 
   Widget _buildGooglePreview() {
     final rawTitle = _seoTitleCtrl.text.trim();
-    final rawDesc  = _seoDescCtrl.text.trim();
-    final slug     = _userSlug ?? 'kullanici';
-    final url      = 'bagla.app/$slug';
+    final rawDesc = _seoDescCtrl.text.trim();
+    final slug = _userSlug ?? 'you';
+    final url = 'Liik › @$slug';
 
     // Karakter sınırlarına göre kes (Google'ın piksel bazlı kesme yerine
     // karakter tahmini: ~60 karakter başlık, ~155 açıklama)
     const titleMax = 60;
-    const descMax  = 155;
-    final title    = rawTitle.isEmpty
-        ? 'Sayfa Başlığı'
+    const descMax = 155;
+    final title = rawTitle.isEmpty
+        ? AppLocalizations.of(context).aiProfilePageTitle
         : rawTitle.length > titleMax
             ? '${rawTitle.substring(0, titleMax)}...'
             : rawTitle;
-    final desc     = rawDesc.isEmpty
-        ? 'Meta açıklama buraya gelecek. Sayfanızı arama sonuçlarında nasıl tanıtmak istediğinizi yazın.'
+    final desc = rawDesc.isEmpty
+        ? AppLocalizations.of(context).aiProfileMetaPlaceholder
         : rawDesc.length > descMax
             ? '${rawDesc.substring(0, descMax)}...'
             : rawDesc;
 
-    final titleLen  = rawTitle.length;
-    final descLen   = rawDesc.length;
+    final titleLen = rawTitle.length;
+    final descLen = rawDesc.length;
 
     Color _barColor(int len, int max) {
       final ratio = len / max;
@@ -1634,11 +1870,11 @@ class _AiProfilePageState extends State<AiProfilePage>
                       fontSize: 13)),
             ),
             const SizedBox(width: 8),
-            const Text('Google Arama Önizlemesi',
-                style: TextStyle(
+            Text(AppLocalizations.of(context).aiProfileGooglePreview,
+                style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151))),
+                    color: const Color(0xFF374151))),
           ],
         ),
         const SizedBox(height: 10),
@@ -1662,26 +1898,25 @@ class _AiProfilePageState extends State<AiProfilePage>
                     width: 18,
                     height: 18,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1),
+                      color: const Color(0xFF0866EB),
                       borderRadius: BorderRadius.circular(3),
                     ),
-                    child: const Icon(Icons.link,
-                        color: Colors.white, size: 11),
+                    child:
+                        const Icon(Icons.link, color: Colors.white, size: 11),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('bagla.app',
+                        const Text('Liik',
                             style: TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF202124),
                                 fontWeight: FontWeight.w500)),
                         Text(url,
                             style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF5F6368)),
+                                fontSize: 11, color: Color(0xFF5F6368)),
                             overflow: TextOverflow.ellipsis),
                       ],
                     ),
@@ -1723,9 +1958,11 @@ class _AiProfilePageState extends State<AiProfilePage>
         // Karakter sayaçları
         Row(
           children: [
-            _seoCounter('Başlık', titleLen, 60, _barColor(titleLen, 60)),
+            _seoCounter(AppLocalizations.of(context).profileSeoTitleLabel,
+                titleLen, 60, _barColor(titleLen, 60)),
             const SizedBox(width: 12),
-            _seoCounter('Açıklama', descLen, 155, _barColor(descLen, 155)),
+            _seoCounter(AppLocalizations.of(context).profileSeoDescriptionLabel,
+                descLen, 155, _barColor(descLen, 155)),
           ],
         ),
         const SizedBox(height: 10),
@@ -1739,19 +1976,37 @@ class _AiProfilePageState extends State<AiProfilePage>
   Widget _buildSeoScoreBadge(int titleLen, int descLen, String keywords) {
     int score = 0;
     // Başlık: 30-60 ideal
-    if (titleLen >= 30 && titleLen <= 60) score += 2;
+    if (titleLen >= 30 && titleLen <= 60)
+      score += 2;
     else if (titleLen > 0) score += 1;
     // Açıklama: 80-155 ideal
-    if (descLen >= 80 && descLen <= 155) score += 2;
+    if (descLen >= 80 && descLen <= 155)
+      score += 2;
     else if (descLen > 0) score += 1;
     // Keywords: var mı
     if (keywords.isNotEmpty) score += 2;
 
     final (label, color, icon) = switch (score) {
-      0     => ('Zayıf',     const Color(0xFF9CA3AF), Icons.signal_cellular_0_bar),
-      1 || 2 => ('Orta',    const Color(0xFFF59E0B), Icons.signal_cellular_alt_1_bar),
-      3 || 4 => ('İyi',     const Color(0xFF10B981), Icons.signal_cellular_alt_2_bar),
-      _      => ('Mükemmel', const Color(0xFF6366F1), Icons.signal_cellular_alt),
+      0 => (
+          AppLocalizations.of(context).aiProfileSeoWeak,
+          const Color(0xFF9CA3AF),
+          Icons.signal_cellular_0_bar
+        ),
+      1 || 2 => (
+          loc.ratingAverage,
+          const Color(0xFFF59E0B),
+          Icons.signal_cellular_alt_1_bar
+        ),
+      3 || 4 => (
+          AppLocalizations.of(context).ratingGood,
+          const Color(0xFF10B981),
+          Icons.signal_cellular_alt_2_bar
+        ),
+      _ => (
+          AppLocalizations.of(context).aiProfileSeoExcellent,
+          const Color(0xFF0866EB),
+          Icons.signal_cellular_alt
+        ),
     };
 
     return Row(
@@ -1773,9 +2028,7 @@ class _AiProfilePageState extends State<AiProfilePage>
               const SizedBox(width: 5),
               Text(label,
                   style: TextStyle(
-                      color: color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700)),
+                      color: color, fontSize: 12, fontWeight: FontWeight.w700)),
             ],
           ),
         ),
@@ -1791,8 +2044,8 @@ class _AiProfilePageState extends State<AiProfilePage>
           Row(
             children: [
               Text(label,
-                  style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF6B7280))),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
               const Spacer(),
               Text('$len / $max',
                   style: TextStyle(
@@ -1828,10 +2081,13 @@ class _AiProfilePageState extends State<AiProfilePage>
       );
     }
 
-    final selectedName = _themes
-        .firstWhere((t) => t['id'] == _selectedThemeId,
-            orElse: () => _themes.first)['name']
-        ?.toString() ?? '';
+    final selectedThemeName = _themes
+            .firstWhere((t) => t['id'] == _selectedThemeId,
+                orElse: () => _themes.first)['name']
+            ?.toString() ??
+        '';
+    final selectedName =
+        selectedThemeName == 'bagla' ? loc.themesClassic : selectedThemeName;
 
     return Column(
       children: [
@@ -1886,7 +2142,7 @@ class _AiProfilePageState extends State<AiProfilePage>
                               size: 14, color: Color(0xFF9CA3AF)),
                           const SizedBox(width: 6),
                           Text(
-                            'Temaya tıklayınca otomatik kaydedilir',
+                            AppLocalizations.of(context).aiProfileThemeAutoSave,
                             style: const TextStyle(
                               color: Color(0xFF9CA3AF),
                               fontSize: 12,
@@ -1911,10 +2167,12 @@ class _AiProfilePageState extends State<AiProfilePage>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: _themes.map((theme) {
-                  final id         = theme['id'] as int?;
-                  final name       = theme['name']?.toString() ?? '';
+                  final id = theme['id'] as int?;
+                  final name = theme['name'] == 'bagla'
+                      ? loc.themesClassic
+                      : theme['name']?.toString() ?? '';
                   final isSelected = id != null && id == _selectedThemeId;
-                  final isSaved    = id != null && id == _savedThemeId;
+                  final isSaved = id != null && id == _savedThemeId;
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -1923,6 +2181,8 @@ class _AiProfilePageState extends State<AiProfilePage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(name),
+                          const SizedBox(width: 6),
+                          ThemeTierBadge(isPremium: isPremiumTheme(theme)),
                           if (isSaved && !_savingTheme) ...[
                             const SizedBox(width: 4),
                             const Icon(Icons.check_circle,
@@ -1937,18 +2197,13 @@ class _AiProfilePageState extends State<AiProfilePage>
                       selectedColor: _primary.withValues(alpha: 0.15),
                       backgroundColor: const Color(0xFFF3F4F6),
                       labelStyle: TextStyle(
-                        color: isSelected
-                            ? _primary
-                            : const Color(0xFF374151),
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w400,
+                        color: isSelected ? _primary : const Color(0xFF374151),
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w400,
                         fontSize: 13,
                       ),
                       side: BorderSide(
-                        color: isSelected
-                            ? _primary
-                            : Colors.transparent,
+                        color: isSelected ? _primary : Colors.transparent,
                         width: isSelected ? 1.5 : 0,
                       ),
                     ),
@@ -1977,7 +2232,8 @@ class _AiProfilePageState extends State<AiProfilePage>
                   child: OutlinedButton.icon(
                     onPressed: () => _tabController.animateTo(1),
                     icon: const Icon(Icons.link_outlined, size: 16),
-                    label: const Text('Linklerimi Düzenle'),
+                    label:
+                        Text(AppLocalizations.of(context).aiProfileEditLinks),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primary,
                       side: const BorderSide(color: _primary),
@@ -1993,10 +2249,12 @@ class _AiProfilePageState extends State<AiProfilePage>
                   child: ElevatedButton.icon(
                     onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
-                            builder: (_) => const MainTabsPage(initialIndex: 0)),
+                            builder: (_) =>
+                                const MainTabsPage(initialIndex: 0)),
                         (_) => false),
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Tamamlandı'),
+                    label: Text(
+                        AppLocalizations.of(context).aiProfileRemainingNone),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       foregroundColor: Colors.white,
@@ -2021,8 +2279,7 @@ class _AiProfilePageState extends State<AiProfilePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.palette_outlined,
-                size: 48, color: Colors.grey.shade300),
+            Icon(Icons.palette_outlined, size: 48, color: Colors.grey.shade300),
             const SizedBox(height: 12),
             Text(
               _userId == null
@@ -2061,16 +2318,19 @@ class _AiProfilePageState extends State<AiProfilePage>
                 if (_previewLoading)
                   Container(
                     color: const Color(0xFFF9FAFB),
-                    child: const Center(
+                    child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(
+                          const CircularProgressIndicator(
                               color: _primary, strokeWidth: 2),
-                          SizedBox(height: 12),
-                          Text('Önizleme yükleniyor...',
-                              style: TextStyle(
-                                  color: Color(0xFF9CA3AF), fontSize: 12)),
+                          const SizedBox(height: 12),
+                          Text(
+                              AppLocalizations.of(context)
+                                  .aiProfilePreviewLoading,
+                              style: const TextStyle(
+                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: 12)),
                         ],
                       ),
                     ),
@@ -2087,9 +2347,10 @@ class _AiProfilePageState extends State<AiProfilePage>
                             const Icon(Icons.wifi_off_outlined,
                                 color: Colors.redAccent, size: 32),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Önizleme yüklenemedi',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)
+                                  .aiProfilePreviewFailed,
+                              style: const TextStyle(
                                   color: Colors.redAccent,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13),
@@ -2097,7 +2358,7 @@ class _AiProfilePageState extends State<AiProfilePage>
                             const SizedBox(height: 12),
                             TextButton(
                               onPressed: _updatePreview,
-                              child: const Text('Tekrar dene'),
+                              child: Text(loc.aiProfileRetry),
                             ),
                           ],
                         ),
@@ -2114,51 +2375,98 @@ class _AiProfilePageState extends State<AiProfilePage>
 
   // ─── Link şablonları ─────────────────────────────────────────────────────────
 
-  static const List<({String name, String emoji, List<int> activeIds})> _kLinkTemplates = [
-    (
-      name: 'Diyetisyen',
-      emoji: '🥗',
-      activeIds: [2, 11, 5, 10, 9, 14], // Instagram, WhatsApp, YouTube, Telefon, E-posta, Web
-    ),
-    (
-      name: 'Psikolog',
-      emoji: '🧠',
-      activeIds: [2, 4, 9, 11, 32, 14], // Instagram, LinkedIn, E-posta, WhatsApp, Zoom, Web
-    ),
-    (
-      name: 'Fizyoterapist',
-      emoji: '💪',
-      activeIds: [2, 11, 5, 10, 9, 13], // Instagram, WhatsApp, YouTube, Telefon, E-posta, Konum
-    ),
-    (
-      name: 'Kişisel Antrenör',
-      emoji: '🏋️',
-      activeIds: [2, 6, 5, 11, 10, 9], // Instagram, TikTok, YouTube, WhatsApp, Telefon, E-posta
-    ),
-    (
-      name: 'Güzellik Uzmanı',
-      emoji: '💅',
-      activeIds: [2, 6, 11, 10, 1, 9], // Instagram, TikTok, WhatsApp, Telefon, Facebook, E-posta
-    ),
-    (
-      name: 'Koç & Danışman',
-      emoji: '🎯',
-      activeIds: [4, 2, 5, 32, 9, 14], // LinkedIn, Instagram, YouTube, Zoom, E-posta, Web
-    ),
-  ];
+  List<({String name, String emoji, List<int> activeIds})>
+      get _kLinkTemplates => [
+            (
+              name: AppLocalizations.of(context).professionDietitian,
+              emoji: '🥗',
+              activeIds: [
+                2,
+                11,
+                5,
+                10,
+                9,
+                14
+              ], // Instagram, WhatsApp, YouTube, Telefon, E-posta, Web
+            ),
+            (
+              name: AppLocalizations.of(context).professionPsychologist,
+              emoji: '🧠',
+              activeIds: [
+                2,
+                4,
+                9,
+                11,
+                32,
+                14
+              ], // Instagram, LinkedIn, E-posta, WhatsApp, Zoom, Web
+            ),
+            (
+              name: AppLocalizations.of(context).professionPhysiotherapist,
+              emoji: '💪',
+              activeIds: [
+                2,
+                11,
+                5,
+                10,
+                9,
+                13
+              ], // Instagram, WhatsApp, YouTube, Telefon, E-posta, Konum
+            ),
+            (
+              name: AppLocalizations.of(context).professionTrainer,
+              emoji: '🏋️',
+              activeIds: [
+                2,
+                6,
+                5,
+                11,
+                10,
+                9
+              ], // Instagram, TikTok, YouTube, WhatsApp, Telefon, E-posta
+            ),
+            (
+              name: AppLocalizations.of(context).professionBeautician,
+              emoji: '💅',
+              activeIds: [
+                2,
+                6,
+                11,
+                10,
+                1,
+                9
+              ], // Instagram, TikTok, WhatsApp, Telefon, Facebook, E-posta
+            ),
+            (
+              name: AppLocalizations.of(context).professionCoach,
+              emoji: '🎯',
+              activeIds: [
+                4,
+                2,
+                5,
+                32,
+                9,
+                14
+              ], // LinkedIn, Instagram, YouTube, Zoom, E-posta, Web
+            ),
+          ];
 
   void _applyLinkTemplate(List<int> activeIds) {
     setState(() {
-      for (final id in _kLinkTypes.keys) {
-        _linkState.putIfAbsent(id, () => {
-          'url': '', 'title': _kLinkTypes[id]!.title, 'is_active': false,
-        });
+      for (final id in _linkTypes(context).keys) {
+        _linkState.putIfAbsent(
+            id,
+            () => {
+                  'url': '',
+                  'title': _linkTypes(context)[id]!.title,
+                  'is_active': false,
+                });
         _linkState[id]!['is_active'] = activeIds.contains(id);
       }
       // Aktifler şablon sırasında önce, pasifler sonra
       _linkOrder = [
-        ...activeIds.where((id) => _kLinkTypes.containsKey(id)),
-        ..._kLinkTypes.keys.where((id) => !activeIds.contains(id)),
+        ...activeIds.where((id) => _linkTypes(context).containsKey(id)),
+        ..._linkTypes(context).keys.where((id) => !activeIds.contains(id)),
       ];
     });
   }
@@ -2170,16 +2478,17 @@ class _AiProfilePageState extends State<AiProfilePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFF6366F1)),
-              SizedBox(width: 6),
+              const Icon(Icons.auto_awesome_rounded,
+                  size: 14, color: const Color(0xFF0866EB)),
+              const SizedBox(width: 6),
               Text(
-                'Mesleğine göre hızlı seç',
-                style: TextStyle(
+                AppLocalizations.of(context).aiProfileProfessionTemplate,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF374151),
+                  color: const Color(0xFF374151),
                 ),
               ),
             ],
@@ -2201,14 +2510,15 @@ class _AiProfilePageState extends State<AiProfilePage>
                         horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF7C3AED)],
+                        colors: [Color(0xFF0866EB), Color(0xFF7C3AED)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF6366F1).withValues(alpha: 0.25),
+                          color:
+                              const Color(0xFF0866EB).withValues(alpha: 0.25),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -2217,8 +2527,7 @@ class _AiProfilePageState extends State<AiProfilePage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(t.emoji,
-                            style: const TextStyle(fontSize: 18)),
+                        Text(t.emoji, style: const TextStyle(fontSize: 18)),
                         const SizedBox(height: 4),
                         Text(
                           t.name,
@@ -2246,10 +2555,12 @@ class _AiProfilePageState extends State<AiProfilePage>
     // _linkOrder yoksa başlat
     if (_linkOrder.isEmpty) {
       _linkOrder = [
-        ..._kLinkTypes.keys.where((id) =>
-            _linkState[id]?['is_active'] == true),
-        ..._kLinkTypes.keys.where((id) =>
-            _linkState[id]?['is_active'] != true),
+        ..._linkTypes(context)
+            .keys
+            .where((id) => _linkState[id]?['is_active'] == true),
+        ..._linkTypes(context)
+            .keys
+            .where((id) => _linkState[id]?['is_active'] != true),
       ];
     }
 
@@ -2268,10 +2579,10 @@ class _AiProfilePageState extends State<AiProfilePage>
               const Icon(Icons.drag_indicator,
                   size: 16, color: Color(0xFF9CA3AF)),
               const SizedBox(width: 6),
-              const Text(
-                'Aktif linkleri sürükle-bırak ile sırala',
-                style: TextStyle(
-                    color: Color(0xFF9CA3AF), fontSize: 12),
+              Text(
+                AppLocalizations.of(context).aiProfileReorderLinks,
+                style: const TextStyle(
+                    color: const Color(0xFF9CA3AF), fontSize: 12),
               ),
             ],
           ),
@@ -2298,11 +2609,10 @@ class _AiProfilePageState extends State<AiProfilePage>
             ),
             itemBuilder: (context, idx) {
               final tid = _linkOrder[idx];
-              if (!_kLinkTypes.containsKey(tid)) {
+              if (!_linkTypes(context).containsKey(tid)) {
                 return const SizedBox.shrink(key: ValueKey('skip'));
               }
-              return _buildLinkRow(tid,
-                  key: ValueKey('link_$tid'));
+              return _buildLinkRow(tid, key: ValueKey('link_$tid'));
             },
           ),
         ),
@@ -2344,12 +2654,16 @@ class _AiProfilePageState extends State<AiProfilePage>
   }
 
   Widget _buildLinkRow(int typeId, {Key? key}) {
-    final meta   = _kLinkTypes[typeId]!;
-    final data   = _linkState.putIfAbsent(typeId, () => {
-      'url': '', 'title': meta.title, 'is_active': false,
-    });
+    final meta = _linkTypes(context)[typeId]!;
+    final data = _linkState.putIfAbsent(
+        typeId,
+        () => {
+              'url': '',
+              'title': meta.title,
+              'is_active': false,
+            });
     final active = data['is_active'] as bool? ?? false;
-    final ctrl   = _getLinkCtrl(typeId, data['url']?.toString() ?? '');
+    final ctrl = _getLinkCtrl(typeId, data['url']?.toString() ?? '');
 
     return Container(
       key: key,
@@ -2358,27 +2672,36 @@ class _AiProfilePageState extends State<AiProfilePage>
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: active ? meta.color.withValues(alpha: 0.4) : const Color(0xFFE5E7EB),
+          color: active
+              ? meta.color.withValues(alpha: 0.4)
+              : const Color(0xFFE5E7EB),
         ),
-        boxShadow: const [BoxShadow(color: Color(0x07000000), blurRadius: 4, offset: Offset(0, 1))],
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x07000000), blurRadius: 4, offset: Offset(0, 1))
+        ],
       ),
       child: Column(
         children: [
           ListTile(
             dense: true,
-            contentPadding: const EdgeInsets.only(left: 8, right: 12, top: 2, bottom: 2),
+            contentPadding:
+                const EdgeInsets.only(left: 8, right: 12, top: 2, bottom: 2),
             leading: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.drag_handle_rounded,
-                    size: 18,
-                    color: const Color(0xFFD1D5DB)),
+                const Icon(Icons.drag_handle_rounded,
+                    size: 18, color: const Color(0xFFD1D5DB)),
                 const SizedBox(width: 6),
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: meta.color.withValues(alpha: active ? 1.0 : 0.15),
-                  child: Icon(meta.icon, size: 16,
-                      color: active ? Colors.white : meta.color.withValues(alpha: 0.6)),
+                  backgroundColor:
+                      meta.color.withValues(alpha: active ? 1.0 : 0.15),
+                  child: Icon(meta.icon,
+                      size: 16,
+                      color: active
+                          ? Colors.white
+                          : meta.color.withValues(alpha: 0.6)),
                 ),
               ],
             ),
@@ -2386,7 +2709,9 @@ class _AiProfilePageState extends State<AiProfilePage>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-                  color: active ? const Color(0xFF1E1E2D) : const Color(0xFF9CA3AF),
+                  color: active
+                      ? const Color(0xFF1E1E2D)
+                      : const Color(0xFF9CA3AF),
                 )),
             trailing: Switch(
               value: active,
@@ -2405,10 +2730,12 @@ class _AiProfilePageState extends State<AiProfilePage>
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
                   hintText: _linkHint(typeId),
-                  hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 13),
+                  hintStyle:
+                      const TextStyle(color: Color(0xFFD1D5DB), fontSize: 13),
                   filled: true,
                   fillColor: const Color(0xFFF9FAFB),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -2447,7 +2774,7 @@ class _AiProfilePageState extends State<AiProfilePage>
         const SizedBox(height: 8),
         Row(
           children: _tonOptions.map((ton) {
-            final meta      = _tonMeta[ton]!;
+            final meta = _tonMeta[ton]!;
             final isSelected = _selectedTon == ton;
             return Expanded(
               child: GestureDetector(
@@ -2455,7 +2782,8 @@ class _AiProfilePageState extends State<AiProfilePage>
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? _primary.withValues(alpha: 0.25)
@@ -2474,7 +2802,9 @@ class _AiProfilePageState extends State<AiProfilePage>
                       const SizedBox(height: 4),
                       Text(meta.$2,
                           style: TextStyle(
-                            color: isSelected ? _aiAccent : Colors.white.withValues(alpha: 0.7),
+                            color: isSelected
+                                ? _aiAccent
+                                : Colors.white.withValues(alpha: 0.7),
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                           )),
@@ -2498,21 +2828,36 @@ class _AiProfilePageState extends State<AiProfilePage>
 
   String _linkHint(int typeId) {
     switch (typeId) {
-      case 1:  return 'https://facebook.com/kullanici';
-      case 2:  return 'https://instagram.com/kullanici';
-      case 3:  return 'https://x.com/kullanici';
-      case 4:  return 'https://linkedin.com/in/kullanici';
-      case 5:  return 'https://youtube.com/@kanal';
-      case 6:  return 'https://tiktok.com/@kullanici';
-      case 9:  return 'mailto:ornek@email.com';
-      case 10: return 'tel:+905321234567';
-      case 11: return 'https://wa.me/905321234567';
-      case 12: return '@kullanici_adi';
-      case 13: return 'https://maps.google.com/?q=...';
-      case 14: return 'https://siteniz.com';
-      case 32: return 'https://zoom.us/j/toplanti-id';
-      case 39: return 'https://threads.net/@kullanici';
-      default: return 'https://...';
+      case 1:
+        return 'https://facebook.com/kullanici';
+      case 2:
+        return 'https://instagram.com/kullanici';
+      case 3:
+        return 'https://x.com/kullanici';
+      case 4:
+        return 'https://linkedin.com/in/kullanici';
+      case 5:
+        return 'https://youtube.com/@kanal';
+      case 6:
+        return 'https://tiktok.com/@kullanici';
+      case 9:
+        return 'mailto:ornek@email.com';
+      case 10:
+        return 'tel:+905321234567';
+      case 11:
+        return 'https://wa.me/905321234567';
+      case 12:
+        return '@kullanici_adi';
+      case 13:
+        return 'https://maps.google.com/?q=...';
+      case 14:
+        return 'https://siteniz.com';
+      case 32:
+        return 'https://zoom.us/j/toplanti-id';
+      case 39:
+        return 'https://threads.net/@kullanici';
+      default:
+        return 'https://...';
     }
   }
 }

@@ -1,1174 +1,966 @@
 import 'dart:convert';
 import 'package:bagla_mobile/auth.dart';
 import 'package:bagla_mobile/config.dart';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:bagla_mobile/l10n/app_localizations.dart';
 import 'package:bagla_mobile/main_tabs_page.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-// ─── Design tokens ─────────────────────────────────────────────────────────────
-class _T {
-  // Backgrounds
-  static const bg = Color(0xFFF5F6FA);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF9FAFB);
-
-  // Borders
-  static const border = Color(0xFFE8EAF0);
-
-  // Accent
-  static const accent = Color(0xFF5B5FD9);
-  static const accentLight = Color(0xFFEEEEFF);
-  static const accentMid = Color(0xFFABADF0);
-
-  // Text
-  static const textPrimary = Color(0xFF1A1A2E);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textMuted = Color(0xFFB0B7C3);
-
-  // Semantic
-  static const success = Color(0xFF10B981);
-  static const successBg = Color(0xFFECFDF5);
-  static const danger = Color(0xFFEF4444);
-  static const dangerBg = Color(0xFFFEF2F2);
-}
+const _blue = Color(0xFF0866EB);
+const _ink = Color(0xFF0C2032);
+const _muted = Color(0xFF627183);
+const _border = Color(0xFFE5EAF1);
+const _background = Color(0xFFFAFBFD);
 
 class MyLinksPage extends StatefulWidget {
   const MyLinksPage({super.key});
-
   @override
   State<MyLinksPage> createState() => _MyLinksPageState();
 }
 
-class _MyLinksPageState extends State<MyLinksPage>
-    with SingleTickerProviderStateMixin {
+class _MyLinksPageState extends State<MyLinksPage> {
   AppLocalizations get loc => AppLocalizations.of(context);
-
-  final _titleCtrl = TextEditingController();
-  final _urlCtrl = TextEditingController();
-
-  List<Map<String, dynamic>> links = [];
-  List<Map<String, dynamic>> linkTypes = [];
-  List<Map<String, dynamic>> colors = [];
-
-  int? selectedLinkTypeId;
-  int? selectedColorId;
-
-  bool settingsLoading = true;
-  bool isSubmitting = false;
-  Set<int> deletingIds = {};
-  bool isLoading = true;
-  bool showForm = false;
-  bool isSavingOrder = false;
-  String typeSearchQuery = '';
-
-  late final AnimationController _formAnimCtrl;
-  late final Animation<double> _formAnim;
-
-  // ── Navigation ────────────────────────────────────────────────────────────
-
-  void _goHome() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainTabsPage(initialIndex: 0)),
-      (_) => false,
-    );
-  }
-
-  void _goBack() {
-    final nav = Navigator.of(context);
-    if (nav.canPop()) {
-      nav.pop();
-    } else {
-      _goHome();
-    }
-  }
-
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  List<Map<String, dynamic>> _links = [], _types = [], _colors = [];
+  bool _loading = true,
+      _settingsLoading = true,
+      _ordering = false,
+      _formOpen = false;
+  final Set<int> _deleting = {};
+  String? _loadError, _settingsError;
+  int _loadVersion = 0;
+  Future<void>? _settingsRequest;
+  bool get _busy => _ordering || _deleting.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
-    _formAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 280),
-    );
-    _formAnim = CurvedAnimation(parent: _formAnimCtrl, curve: Curves.easeOut);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      fetchProfileData();
-      fetchLinkTypesAndColors();
+      if (mounted) _refresh();
     });
   }
 
-  @override
-  void dispose() {
-    _formAnimCtrl.dispose();
-    _titleCtrl.dispose();
-    _urlCtrl.dispose();
-    super.dispose();
-  }
-
-  // ── Token ─────────────────────────────────────────────────────────────────
-
-  Future<String?> _getToken() async {
-    return getAccessToken();
-  }
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-
-  Future<void> fetchProfileData() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      setState(() => isLoading = false);
-      return;
+  int? _id(dynamic value) =>
+      value is int ? value : int.tryParse(value?.toString() ?? '');
+  int? _typeId(Map<String, dynamic> link) => _id(link['type_id'] ??
+      link['typeId'] ??
+      (link['type'] is Map ? link['type']['id'] : null));
+  int? _colorId(Map<String, dynamic> link) => _id(link['color_id'] ??
+      link['colorId'] ??
+      (link['color'] is Map ? link['color']['id'] : null));
+  List<Map<String, dynamic>> _list(dynamic data) => data is List
+      ? data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList()
+      : [];
+  String _name(Map<String, dynamic> value) =>
+      (value['name'] ?? value['title'] ?? '').toString();
+  Map<String, dynamic> _lookup(List<Map<String, dynamic>> items, int? id) =>
+      items.firstWhere((item) => _id(item['id']) == id, orElse: () => {});
+  Color _color(dynamic value) {
+    final hex = value?.toString().replaceAll('#', '') ?? '';
+    if (!RegExp(r'^(?:[a-fA-F0-9]{6}|[a-fA-F0-9]{8})$').hasMatch(hex)) {
+      return _blue;
     }
+    return Color(int.parse(hex.length == 6 ? 'ff$hex' : hex, radix: 16));
+  }
 
-    final response = await authGet(
-      Uri.parse('$apiBaseUrl/api/user/profile'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body)['data'];
-      setState(() {
-        final raw = data['links'];
-        links = raw is List
-            ? List<Map<String, dynamic>>.from(raw)
-            : <Map<String, dynamic>>[];
-        isLoading = false;
-      });
+  void _back() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
     } else {
-      setState(() => isLoading = false);
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => const MainTabsPage(initialIndex: 0)));
     }
   }
 
-  Future<void> fetchLinkTypesAndColors() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      setState(() => settingsLoading = false);
-      return;
-    }
+  void _snack(String message, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+          content: Text(message),
+          backgroundColor:
+              error ? const Color(0xFFCF354D) : const Color(0xFF008577),
+          behavior: SnackBarBehavior.floating));
+  }
 
+  String _responseError(http.Response response, String fallback) {
     try {
+      final body = jsonDecode(response.body);
+      if (body is Map) {
+        if (body['errors'] is Map) {
+          for (final errors in (body['errors'] as Map).values) {
+            if (errors is List && errors.isNotEmpty) {
+              return errors.first.toString();
+            }
+          }
+        }
+        if (body['message'] is String &&
+            (body['message'] as String).isNotEmpty) {
+          return body['message'];
+        }
+      }
+    } catch (_) {}
+    return fallback;
+  }
+
+  Future<bool> _hasSession() async =>
+      (await getAccessToken())?.isNotEmpty == true;
+
+  Future<void> _refresh() async {
+    if (_busy) return;
+    await Future.wait([_fetchLinks(), _fetchSettings()]);
+  }
+
+  Future<void> _fetchLinks() async {
+    final version = ++_loadVersion;
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+    try {
+      if (!await _hasSession()) throw Exception();
+      final response = await authGet(Uri.parse('$apiBaseUrl/api/user/profile'),
+          headers: const {'Accept': 'application/json'});
+      if (response.statusCode != 200) throw Exception();
+      final body = jsonDecode(response.body);
+      final raw = body['data']['links'];
+      if (raw is! List) throw const FormatException();
+      if (!mounted || version != _loadVersion) return;
+      setState(() {
+        _links = _list(raw);
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted && version == _loadVersion) {
+        setState(() {
+          _loadError = loc.linksLoadError;
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchSettings() => _settingsRequest ??=
+      _loadSettings().whenComplete(() => _settingsRequest = null);
+
+  Future<void> _loadSettings() async {
+    if (!mounted) return;
+    setState(() {
+      _settingsLoading = true;
+      _settingsError = null;
+    });
+    try {
+      if (!await _hasSession()) throw Exception();
       final responses = await Future.wait([
         authGet(Uri.parse('$apiBaseUrl/api/settings/link-types'),
-            headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'}),
+            headers: const {'Accept': 'application/json'}),
         authGet(Uri.parse('$apiBaseUrl/api/settings/colors'),
-            headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'}),
+            headers: const {'Accept': 'application/json'}),
       ]);
-
-      List<Map<String, dynamic>> decodeResponse(http.Response r) {
-        if (r.statusCode != 200) return [];
-        final d = json.decode(r.body);
-        final list = d is List ? d : (d is Map<String, dynamic> ? d['data'] : null);
-        if (list is List) return List<Map<String, dynamic>>.from(list);
-        if (list is Map<String, dynamic>) return [Map<String, dynamic>.from(list)];
-        if (d is Map<String, dynamic>) return [d];
-        return [];
+      if (responses.any((response) => response.statusCode != 200)) {
+        throw Exception();
+      }
+      dynamic decode(http.Response response) {
+        final body = jsonDecode(response.body);
+        return body is Map ? body['data'] : body;
       }
 
-      if (!mounted) return;
-      final ft = decodeResponse(responses[0]);
-      final fc = decodeResponse(responses[1]);
-
-      setState(() {
-        linkTypes = ft;
-        colors = fc;
-        selectedLinkTypeId ??= ft.isNotEmpty ? ft.first['id'] : null;
-        selectedColorId ??= fc.isNotEmpty ? fc.first['id'] : null;
-        settingsLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => settingsLoading = false);
-    }
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  String _resolveTypeName(dynamic typeId) {
-    if (typeId == null) return '';
-    final m = linkTypes.firstWhere((t) => t['id'] == typeId, orElse: () => {});
-    return m['name'] ?? m['title'] ?? (m.isNotEmpty ? loc.myLinksTypeFallback(m['id']) : '');
-  }
-
-  String? _resolveTypeValue(dynamic typeId) {
-    if (typeId == null) return null;
-    final m = linkTypes.firstWhere((t) => t['id'] == typeId, orElse: () => {});
-    return m['type'] ?? m['alias'];
-  }
-
-  String _resolveColorName(dynamic colorId) {
-    if (colorId == null) return '';
-    final m = colors.firstWhere((c) => c['id'] == colorId, orElse: () => {});
-    return m['name'] ?? m['title'] ?? m['color'] ?? '';
-  }
-
-  Color _parseColor(String? hex) {
-    if (hex == null || hex.isEmpty) return _T.textMuted;
-    final cleaned = hex.replaceAll('#', '');
-    final buf = StringBuffer();
-    if (cleaned.length == 6) buf.write('ff');
-    buf.write(cleaned);
-    try {
-      return Color(int.parse(buf.toString(), radix: 16));
-    } catch (_) {
-      return _T.textMuted;
-    }
-  }
-
-  String _getPlaceholder(String? type) {
-    switch (type) {
-      case 'whatsapp': case 'phone': case 'sms': return '+15xxxxxxxxx';
-      case 'email': return 'xxx@sample.com';
-      case 'telegram': return 'https://t.me/username';
-      default: return 'https://example.com';
-    }
-  }
-
-  // ── Snack ─────────────────────────────────────────────────────────────────
-
-  void _snack(String msg, {bool error = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: error ? _T.dangerBg : _T.successBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: error ? _T.danger.withValues(alpha: 0.4) : _T.success.withValues(alpha: 0.4)),
-        ),
-        content: Row(
-          children: [
-            Icon(
-              error ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-              color: error ? _T.danger : _T.success,
-              size: 17,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                msg,
-                style: TextStyle(
-                  color: error ? _T.danger : _T.success,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── CRUD ──────────────────────────────────────────────────────────────────
-
-  Future<void> createLink() async {
-    final token = await _getToken();
-    if (!mounted) return;
-    if (token == null || token.isEmpty || selectedLinkTypeId == null || selectedColorId == null) {
-      _snack(loc.myLinksCreateRequired, error: true);
-      return;
-    }
-
-    setState(() => isSubmitting = true);
-    try {
-      final r = await authPost(
-        Uri.parse('$apiBaseUrl/api/links'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'type_id': selectedLinkTypeId,
-          'title': _titleCtrl.text,
-          'url': _urlCtrl.text,
-          'color_id': selectedColorId,
-        }),
-      );
-      if (!mounted) return;
-      if (r.statusCode == 200 || r.statusCode == 201) {
-        await fetchProfileData();
-        if (!mounted) return;
-        _titleCtrl.clear();
-        _urlCtrl.clear();
-        setState(() => showForm = false);
-        _formAnimCtrl.reverse();
-        _snack(loc.myLinksCreateSuccess);
-      } else {
-        final d = jsonDecode(r.body);
-        _snack(d['message'] ?? d['errors']?.toString() ?? loc.myLinksCreateFailed, error: true);
-      }
-    } catch (_) {
-      if (mounted) _snack(loc.myLinksCreateError, error: true);
-    } finally {
-      if (mounted) setState(() => isSubmitting = false);
-    }
-  }
-
-  Future<void> deleteLink(int id) async {
-    final token = await _getToken();
-    if (!mounted) return;
-    if (token == null || token.isEmpty) {
-      _snack(loc.myLinksTokenMissing, error: true);
-      return;
-    }
-
-    setState(() => deletingIds.add(id));
-    try {
-      final r = await authDelete(
-        Uri.parse('$apiBaseUrl/api/links/$id'),
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-      );
-      if (!mounted) return;
-      if (r.statusCode == 200 || r.statusCode == 204) {
-        await fetchProfileData();
-        if (mounted) _snack(loc.myLinksDeleteSuccess);
-      } else {
-        final d = jsonDecode(r.body);
-        _snack(d['message'] ?? loc.myLinksDeleteFailed, error: true);
-      }
-    } catch (_) {
-      if (mounted) _snack(loc.myLinksDeleteError, error: true);
-    } finally {
-      if (mounted) setState(() => deletingIds.remove(id));
-    }
-  }
-
-  Future<void> updateLink({
-    required int id,
-    required String title,
-    required String url,
-    required int typeId,
-    required int colorId,
-  }) async {
-    final token = await _getToken();
-    if (!mounted) return;
-    if (token == null || token.isEmpty) {
-      _snack(loc.myLinksTokenMissing, error: true);
-      return;
-    }
-
-    final r = await authPut(
-      Uri.parse('$apiBaseUrl/api/links/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'type_id': typeId, 'title': title, 'url': url, 'color_id': colorId}),
-    );
-    if (!mounted) return;
-    if (r.statusCode == 200) {
-      await fetchProfileData();
-      if (mounted) _snack(loc.myLinksUpdateSuccess);
-    } else {
-      final d = jsonDecode(r.body);
-      _snack(d['message'] ?? loc.myLinksUpdateFailed, error: true);
-    }
-  }
-
-  Future<void> _persistOrder() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) return;
-    setState(() => isSavingOrder = true);
-    try {
-      final orders = [
-        for (int i = 0; i < links.length; i++)
-          if (links[i]['id'] != null) {'id': links[i]['id'], 'order': i}
-      ];
-      await authPost(
-        Uri.parse('$apiBaseUrl/api/links/reorder'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'orders': orders}),
-      );
-    } catch (_) {}
-    if (mounted) setState(() => isSavingOrder = false);
-  }
-
-  // ── Edit sheet ────────────────────────────────────────────────────────────
-
-  void _openEditSheet(Map<String, dynamic> link) {
-    final id = link['id'];
-    if (id == null) return;
-
-    final titleCtrl = TextEditingController(text: link['title']?.toString() ?? '');
-    final urlCtrl = TextEditingController(text: link['url']?.toString() ?? '');
-    int? typeId = link['type_id'] ?? link['typeId'] ?? (link['type'] != null ? link['type']['id'] : null);
-    int? colorId = link['color_id'] ?? link['colorId'] ?? (link['color']?['id']);
-    String localQuery = '';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) {
-          final filtered = linkTypes.where((t) {
-            final n = (t['name'] ?? t['title'] ?? '').toString().toLowerCase();
-            return n.contains(localQuery);
-          }).toList();
-          final effectiveType = filtered.any((t) => t['id'] == typeId) ? typeId : null;
-
-          return Container(
-            decoration: const BoxDecoration(
-              color: _T.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: _T.border,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    loc.myLinksEditTitle,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: _T.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _MinimalField(
-                    hint: loc.myLinksSearchType,
-                    prefixIcon: Icons.search_rounded,
-                    onChanged: (v) => setModal(() => localQuery = v.toLowerCase()),
-                  ),
-                  const SizedBox(height: 10),
-                  _MinimalDropdown<int>(
-                    label: loc.myLinksLinkType,
-                    value: effectiveType,
-                    items: filtered.isEmpty
-                        ? [DropdownMenuItem(value: null, child: Text(loc.myLinksNoResults, style: const TextStyle(color: _T.textMuted)))]
-                        : filtered.map((t) => DropdownMenuItem<int>(
-                              value: t['id'],
-                              child: Text(t['name'] ?? t['title'] ?? ''),
-                            )).toList(),
-                    onChanged: filtered.isEmpty ? null : (v) => setModal(() => typeId = v),
-                  ),
-                  const SizedBox(height: 10),
-                  _MinimalField(
-                    controller: titleCtrl,
-                    hint: loc.myLinksTitleLabel,
-                    prefixIcon: Icons.title_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  _MinimalField(
-                    controller: urlCtrl,
-                    hint: loc.myLinksUrlLabel,
-                    placeholder: _getPlaceholder(_resolveTypeValue(typeId) ?? 'link'),
-                    prefixIcon: Icons.link_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  _MinimalDropdown<int>(
-                    label: loc.myLinksColorLabel,
-                    value: colorId,
-                    items: colors.map((c) {
-                      final code = c['color']?.toString();
-                      return DropdownMenuItem<int>(
-                        value: c['id'],
-                        child: Row(children: [
-                          Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: _parseColor(code),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: _T.border),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(c['name'] ?? c['title'] ?? ''),
-                        ]),
-                      );
-                    }).toList(),
-                    onChanged: (v) => setModal(() => colorId = v),
-                  ),
-                  const SizedBox(height: 20),
-                  _PrimaryButton(
-                    label: loc.myLinksUpdateButton,
-                    disabled: typeId == null || colorId == null,
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      updateLink(
-                        id: id,
-                        title: titleCtrl.text,
-                        url: urlCtrl.text,
-                        typeId: typeId!,
-                        colorId: colorId!,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ── Link card ─────────────────────────────────────────────────────────────
-
-  Widget _buildLinkCard(Map<String, dynamic> link, int index) {
-    final typeId = link['type_id'] ?? link['typeId'] ?? (link['type']?['id']);
-    final colorId = link['color_id'] ?? link['colorId'] ?? (link['color']?['id']);
-    final typeName = _resolveTypeName(typeId);
-    final colorName = _resolveColorName(colorId);
-    final colorSwatch = _parseColor(link['color']?['color']?.toString() ?? link['color']?.toString());
-    final isDeleting = deletingIds.contains(link['id']);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: _T.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _T.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          // Drag handle
-          ReorderableDragStartListener(
-            index: index,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              child: const Icon(Icons.drag_indicator_rounded,
-                  color: _T.textMuted, size: 18),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _T.accentLight,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.link_rounded, color: _T.accent, size: 18),
-          ),
-          const SizedBox(width: 12),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  link['title'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _T.textPrimary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  link['url'] ?? '',
-                  style: const TextStyle(fontSize: 12, color: _T.textSecondary),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (typeName.isNotEmpty || colorName.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        if (typeName.isNotEmpty)
-                          _TagPill(label: typeName),
-                        if (colorName.isNotEmpty)
-                          _ColorPill(label: colorName, color: colorSwatch),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Actions
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _IconBtn(
-                icon: Icons.edit_outlined,
-                color: _T.textSecondary,
-                onTap: () => _openEditSheet(link),
-              ),
-              const SizedBox(height: 4),
-              isDeleting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: _T.danger),
-                    )
-                  : _IconBtn(
-                      icon: Icons.delete_outline_rounded,
-                      color: _T.danger,
-                      onTap: link['id'] == null ? null : () => deleteLink(link['id']),
-                    ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Link form ─────────────────────────────────────────────────────────────
-
-  Widget _buildLinkForm() {
-    if (settingsLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2)),
-      );
-    }
-
-    final filtered = linkTypes.where((t) {
-      final n = (t['name'] ?? t['title'] ?? '').toString().toLowerCase();
-      return n.contains(typeSearchQuery);
-    }).toList();
-    final effectiveType = filtered.any((t) => t['id'] == selectedLinkTypeId)
-        ? selectedLinkTypeId
-        : null;
-
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        color: _T.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _T.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'New Link',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: _T.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _MinimalField(
-            hint: loc.myLinksSearchType,
-            prefixIcon: Icons.search_rounded,
-            onChanged: (v) => setState(() => typeSearchQuery = v.toLowerCase()),
-          ),
-          const SizedBox(height: 10),
-          _MinimalDropdown<int>(
-            label: loc.myLinksLinkType,
-            value: effectiveType,
-            items: filtered.isEmpty
-                ? [DropdownMenuItem(value: null, child: Text(loc.myLinksNoResults, style: const TextStyle(color: _T.textMuted)))]
-                : filtered.map((t) => DropdownMenuItem<int>(
-                      value: t['id'],
-                      child: Text(t['name'] ?? t['title'] ?? ''),
-                    )).toList(),
-            onChanged: filtered.isEmpty ? null : (v) => setState(() => selectedLinkTypeId = v),
-          ),
-          const SizedBox(height: 10),
-          _MinimalField(
-            controller: _titleCtrl,
-            hint: loc.myLinksTitleLabel,
-            prefixIcon: Icons.title_rounded,
-          ),
-          const SizedBox(height: 10),
-          _MinimalField(
-            controller: _urlCtrl,
-            hint: loc.myLinksUrlLabel,
-            placeholder: _getPlaceholder(_resolveTypeValue(selectedLinkTypeId) ?? 'link'),
-            prefixIcon: Icons.link_rounded,
-          ),
-          const SizedBox(height: 10),
-          _MinimalDropdown<int>(
-            label: loc.myLinksColorLabel,
-            value: selectedColorId,
-            items: colors.map((c) {
-              final code = c['color']?.toString();
-              return DropdownMenuItem<int>(
-                value: c['id'],
-                child: Row(children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: _parseColor(code),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: _T.border),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(c['name'] ?? c['title'] ?? ''),
-                ]),
-              );
-            }).toList(),
-            onChanged: (v) => setState(() => selectedColorId = v),
-          ),
-          const SizedBox(height: 16),
-          _PrimaryButton(
-            label: isSubmitting ? loc.myLinksSaving : loc.myLinksAddLink,
-            loading: isSubmitting,
-            disabled: isSubmitting || selectedLinkTypeId == null || selectedColorId == null,
-            onTap: createLink,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── List ──────────────────────────────────────────────────────────────────
-
-  Widget _buildList() {
-    if (links.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(
-                color: _T.accentLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.link_off_rounded, color: _T.accentMid, size: 28),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              loc.myLinksNoLinksTitle,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: _T.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              loc.myLinksNoLinksSubtitle,
-              style: const TextStyle(fontSize: 13, color: _T.textSecondary),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ReorderableListView.builder(
-      buildDefaultDragHandles: false,
-      padding: const EdgeInsets.only(bottom: 8),
-      itemCount: links.length,
-      onReorder: (oldIndex, newIndex) async {
+      final types = _list(decode(responses[0])),
+          colors = _list(decode(responses[1]));
+      if (types.isEmpty || colors.isEmpty) throw Exception();
+      if (mounted) {
         setState(() {
-          if (newIndex > oldIndex) newIndex -= 1;
-          final item = links.removeAt(oldIndex);
-          links.insert(newIndex, item);
+          _types = types;
+          _colors = colors;
+          _settingsLoading = false;
         });
-        await _persistOrder();
-      },
-      itemBuilder: (_, i) => Container(
-        key: ValueKey(links[i]['id'] ?? i),
-        margin: const EdgeInsets.only(bottom: 10),
-        child: _buildLinkCard(links[i], i),
-      ),
-    );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _settingsLoading = false;
+          _settingsError = loc.linksSettingsError;
+        });
+      }
+    }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _T.bg,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: _T.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: _AppBarBtn(icon: Icons.arrow_back_rounded, onTap: _goBack,
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip),
-        title: const Text(
-          'My Links',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: _T.textPrimary,
-          ),
-        ),
-        actions: [
-          if (isSavingOrder)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: _T.accent),
-                ),
-              ),
-            ),
-          _AppBarBtn(icon: Icons.home_outlined, onTap: _goHome, tooltip: loc.dashboardHome),
-          const SizedBox(width: 4),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: _T.border),
-        ),
-      ),
-      body: SafeArea(
-        child: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2),
-              )
-            : Column(
-                children: [
-                  // Link list
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      child: _buildList(),
-                    ),
-                  ),
-
-                  // Bottom bar
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: _T.surface,
-                      border: Border(top: BorderSide(color: _T.border)),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Toggle button
-                        GestureDetector(
-                          onTap: () {
-                            setState(() => showForm = !showForm);
-                            if (showForm) {
-                              _formAnimCtrl.forward();
-                            } else {
-                              _formAnimCtrl.reverse();
-                            }
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: showForm ? _T.accentLight : _T.accent,
-                              borderRadius: BorderRadius.circular(13),
-                              border: showForm
-                                  ? Border.all(color: _T.accentMid.withValues(alpha: 0.5))
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                AnimatedRotation(
-                                  turns: showForm ? 0.125 : 0,
-                                  duration: const Duration(milliseconds: 250),
-                                  child: Icon(
-                                    Icons.add_rounded,
-                                    color: showForm ? _T.accent : Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  showForm ? loc.myLinksHideForm : loc.myLinksShowForm,
-                                  style: TextStyle(
-                                    color: showForm ? _T.accent : Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Animated form
-                        SizeTransition(
-                          sizeFactor: _formAnim,
-                          axisAlignment: -1,
-                          child: _buildLinkForm(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
+  Future<void> _reorder(int oldIndex, int newIndex) async {
+    if (_busy || _loading || oldIndex == newIndex) return;
+    if (newIndex > oldIndex) newIndex--;
+    if (newIndex == oldIndex) return;
+    final previous = List<Map<String, dynamic>>.from(_links);
+    setState(() {
+      _ordering = true;
+      final item = _links.removeAt(oldIndex);
+      _links.insert(newIndex, item);
+    });
+    try {
+      if (!await _hasSession()) throw Exception();
+      final response = await authPost(
+          Uri.parse('$apiBaseUrl/api/links/reorder'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: jsonEncode({
+            'orders': [
+              for (var i = 0; i < _links.length; i++)
+                {'id': _id(_links[i]['id']), 'order': i}
+            ]
+          }));
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _links = previous);
+        _snack(loc.linksOrderError, error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _ordering = false);
+    }
   }
-}
 
-// ── Reusable widgets ──────────────────────────────────────────────────────────
+  Future<void> _delete(Map<String, dynamic> link) async {
+    if (_busy) return;
+    final id = _id(link['id']);
+    if (id == null) return;
+    final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+                title: Text(loc.linksDeleteTitle),
+                content: Text(loc.linksDeleteBody),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(loc.customersCancel)),
+                  FilledButton(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFCF354D)),
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(loc.customersDelete))
+                ]));
+    if (confirmed != true || !mounted || _busy) return;
+    setState(() => _deleting.add(id));
+    try {
+      if (!await _hasSession()) throw Exception();
+      final response = await authDelete(Uri.parse('$apiBaseUrl/api/links/$id'),
+          headers: const {'Accept': 'application/json'});
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        _snack(_responseError(response, loc.myLinksDeleteFailed), error: true);
+        return;
+      }
+      if (mounted) {
+        setState(() => _links.removeWhere((item) => _id(item['id']) == id));
+        _snack(loc.myLinksDeleteSuccess);
+      }
+    } catch (_) {
+      _snack(loc.myLinksDeleteError, error: true);
+    } finally {
+      if (mounted) setState(() => _deleting.remove(id));
+    }
+  }
 
-class _AppBarBtn extends StatelessWidget {
-  const _AppBarBtn({required this.icon, required this.onTap, this.tooltip});
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? tooltip;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-        message: tooltip ?? '',
-        child: GestureDetector(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(icon, size: 20, color: _T.textSecondary),
-          ),
-        ),
-      );
-}
-
-class _IconBtn extends StatelessWidget {
-  const _IconBtn({required this.icon, required this.color, this.onTap});
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 16, color: color),
-        ),
-      );
-}
-
-class _TagPill extends StatelessWidget {
-  const _TagPill({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: _T.surfaceAlt,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: _T.border),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: _T.textSecondary, fontWeight: FontWeight.w500),
-        ),
-      );
-}
-
-class _ColorPill extends StatelessWidget {
-  const _ColorPill({required this.label, required this.color});
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: _T.surfaceAlt,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: _T.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: _T.textSecondary, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      );
-}
-
-class _MinimalField extends StatelessWidget {
-  const _MinimalField({
-    this.controller,
-    required this.hint,
-    this.placeholder,
-    this.prefixIcon,
-    this.onChanged,
-  });
-  final TextEditingController? controller;
-  final String hint;
-  final String? placeholder;
-  final IconData? prefixIcon;
-  final ValueChanged<String>? onChanged;
-
-  @override
-  Widget build(BuildContext context) => TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: const TextStyle(fontSize: 14, color: _T.textPrimary),
-        decoration: InputDecoration(
-          labelText: hint,
-          hintText: placeholder,
-          labelStyle: const TextStyle(fontSize: 13, color: _T.textSecondary),
-          hintStyle: const TextStyle(fontSize: 13, color: _T.textMuted),
-          prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, size: 18, color: _T.textMuted)
-              : null,
-          filled: true,
-          fillColor: _T.surfaceAlt,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: _T.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: _T.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: _T.accent, width: 1.5),
-          ),
-        ),
-      );
-}
-
-class _MinimalDropdown<T> extends StatelessWidget {
-  const _MinimalDropdown({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-  final String label;
-  final T? value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?>? onChanged;
-
-  @override
-  Widget build(BuildContext context) => DropdownButtonFormField<T>(
-        initialValue: value,
-        items: items,
-        onChanged: onChanged,
-        style: const TextStyle(fontSize: 14, color: _T.textPrimary),
-        dropdownColor: _T.surface,
-        icon: const Icon(Icons.expand_more_rounded, size: 18, color: _T.textMuted),
-        decoration: InputDecoration(
+  String _placeholder(int? typeId) => switch (
+          (_lookup(_types, typeId)['type'] ?? _lookup(_types, typeId)['alias'])
+              ?.toString()) {
+        'phone' || 'sms' || 'whatsapp' => '+15551234567',
+        'email' => 'hello@example.com',
+        'telegram' => 'https://t.me/username',
+        _ => 'https://example.com',
+      };
+  InputDecoration _decoration(String label, {String? hint, IconData? icon}) =>
+      InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(fontSize: 13, color: _T.textSecondary),
+          hintText: hint,
+          prefixIcon: icon == null ? null : Icon(icon, size: 20, color: _muted),
           filled: true,
-          fillColor: _T.surfaceAlt,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.all(16),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: _T.border),
-          ),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: _border)),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: _T.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: _T.accent, width: 1.5),
-          ),
-        ),
-      );
-}
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: _border)));
 
-class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({
-    required this.label,
-    required this.onTap,
-    this.loading = false,
-    this.disabled = false,
-  });
-  final String label;
-  final VoidCallback onTap;
-  final bool loading;
-  final bool disabled;
+  Future<int?> _chooseType() {
+    String query = '';
+    return showDialog<int>(
+        context: context,
+        builder: (ctx) => Dialog(
+            child: SizedBox(
+                height: MediaQuery.sizeOf(ctx).height * .72,
+                child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: StatefulBuilder(builder: (ctx, update) {
+                      final items = _types
+                          .where((item) => _name(item)
+                              .toLowerCase()
+                              .contains(query.toLowerCase()))
+                          .toList();
+                      return Column(children: [
+                        Row(children: [
+                          Expanded(
+                              child: Text(loc.myLinksSearchType,
+                                  style: const TextStyle(
+                                      color: _ink,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18))),
+                          IconButton(
+                              tooltip: loc.appointmentsClose,
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              icon: const Icon(Icons.close_rounded))
+                        ]),
+                        const SizedBox(height: 12),
+                        TextField(
+                            key: const ValueKey('link-type-search'),
+                            onChanged: (value) => update(() => query = value),
+                            decoration: _decoration(loc.myLinksSearchType,
+                                icon: Icons.search_rounded)),
+                        const SizedBox(height: 12),
+                        Expanded(
+                            child: items.isEmpty
+                                ? Center(child: Text(loc.myLinksNoResults))
+                                : ListView.builder(
+                                    itemCount: items.length,
+                                    itemBuilder: (_, index) => ListTile(
+                                        title: Text(_name(items[index])),
+                                        onTap: () => Navigator.of(ctx)
+                                            .pop(_id(items[index]['id'])))))
+                      ]);
+                    })))));
+  }
+
+  Future<void> _openForm({Map<String, dynamic>? link}) async {
+    if (_formOpen || _busy || _loading) return;
+    _formOpen = true;
+    if (_settingsLoading) await (_settingsRequest ?? _fetchSettings());
+    if (!mounted) {
+      _formOpen = false;
+      return;
+    }
+    final title = TextEditingController(text: link?['title']?.toString() ?? ''),
+        url = TextEditingController(text: link?['url']?.toString() ?? '');
+    final form = GlobalKey<FormState>();
+    int? typeId = link == null
+        ? (_types.isEmpty ? null : _id(_types.first['id']))
+        : _typeId(link);
+    int? colorId = link == null
+        ? (_colors.isEmpty ? null : _id(_colors.first['id']))
+        : _colorId(link);
+    bool saving = false;
+    String? error;
+    ModalRoute<dynamic>? route;
+    try {
+      await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: _background,
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * .94),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          builder: (ctx) {
+            route = ModalRoute.of(ctx);
+            return StatefulBuilder(builder: (ctx, update) {
+              final validType = _types.any((item) => _id(item['id']) == typeId)
+                  ? typeId
+                  : null;
+              final validColor =
+                  _colors.any((item) => _id(item['id']) == colorId)
+                      ? colorId
+                      : null;
+              return PopScope(
+                  canPop: !saving,
+                  child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          20, 16, 20, MediaQuery.viewInsetsOf(ctx).bottom + 24),
+                      child: SingleChildScrollView(
+                          child: Form(
+                              key: form,
+                              child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Center(
+                                        child: Container(
+                                            width: 36,
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                                color: _border,
+                                                borderRadius:
+                                                    BorderRadius.circular(4)))),
+                                    const SizedBox(height: 18),
+                                    Row(children: [
+                                      Expanded(
+                                          child: Text(
+                                              link == null
+                                                  ? loc.myLinksNewLink
+                                                  : loc.myLinksEditTitle,
+                                              style: const TextStyle(
+                                                  color: _ink,
+                                                  fontSize: 24,
+                                                  fontWeight:
+                                                      FontWeight.w800))),
+                                      IconButton(
+                                          tooltip: loc.appointmentsClose,
+                                          onPressed: saving
+                                              ? null
+                                              : () => Navigator.of(ctx).pop(),
+                                          icon: const Icon(Icons.close_rounded,
+                                              color: _muted))
+                                    ]),
+                                    const SizedBox(height: 8),
+                                    Text(loc.linksFormSubtitle,
+                                        style: const TextStyle(
+                                            color: _muted, height: 1.5)),
+                                    const SizedBox(height: 24),
+                                    if (_settingsLoading)
+                                      const Padding(
+                                          padding: EdgeInsets.all(24),
+                                          child: Center(
+                                              child: CircularProgressIndicator(
+                                                  color: _blue)))
+                                    else if (_settingsError != null) ...[
+                                      Text(_settingsError!,
+                                          style:
+                                              const TextStyle(color: _muted)),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton.icon(
+                                          onPressed: () async {
+                                            update(() {});
+                                            final future = _fetchSettings();
+                                            update(() {});
+                                            await future;
+                                            if (ctx.mounted) {
+                                              update(() {
+                                                if (link == null) {
+                                                  typeId ??= _types.isEmpty
+                                                      ? null
+                                                      : _id(_types.first['id']);
+                                                  colorId ??= _colors.isEmpty
+                                                      ? null
+                                                      : _id(
+                                                          _colors.first['id']);
+                                                }
+                                              });
+                                            }
+                                          },
+                                          icon: const Icon(Icons.refresh),
+                                          label: Text(loc.customersRetry))
+                                    ] else ...[
+                                      DropdownButtonFormField<int>(
+                                          key: ValueKey('link-type-$validType'),
+                                          initialValue: validType,
+                                          isExpanded: true,
+                                          decoration: _decoration(
+                                                  loc.myLinksLinkType,
+                                                  icon: Icons.category_outlined)
+                                              .copyWith(
+                                                  suffixIcon: IconButton(
+                                                      tooltip:
+                                                          loc.myLinksSearchType,
+                                                      onPressed: saving
+                                                          ? null
+                                                          : () async {
+                                                              final selected =
+                                                                  await _chooseType();
+                                                              if (ctx.mounted &&
+                                                                  selected !=
+                                                                      null) {
+                                                                update(() =>
+                                                                    typeId =
+                                                                        selected);
+                                                              }
+                                                            },
+                                                      icon: const Icon(Icons
+                                                          .search_rounded))),
+                                          items: _types
+                                              .map((item) => DropdownMenuItem(
+                                                  value: _id(item['id']),
+                                                  child: Text(_name(item),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow
+                                                          .ellipsis)))
+                                              .toList(),
+                                          onChanged: saving
+                                              ? null
+                                              : (value) =>
+                                                  update(() => typeId = value),
+                                          validator: (value) => value == null
+                                              ? loc.myLinksTypeMissing
+                                              : null),
+                                      const SizedBox(height: 16),
+                                      TextFormField(
+                                          key: const ValueKey('link-title'),
+                                          controller: title,
+                                          enabled: !saving,
+                                          textCapitalization:
+                                              TextCapitalization.sentences,
+                                          decoration: _decoration(
+                                              loc.myLinksTitleLabel,
+                                              icon: Icons.title_rounded),
+                                          validator: (value) =>
+                                              (value?.length ?? 0) > 255
+                                                  ? loc.linksTextTooLong
+                                                  : null),
+                                      const SizedBox(height: 16),
+                                      TextFormField(
+                                          key: const ValueKey('link-url'),
+                                          controller: url,
+                                          enabled: !saving,
+                                          keyboardType: TextInputType.url,
+                                          autocorrect: false,
+                                          decoration: _decoration(
+                                              loc.myLinksUrlLabel,
+                                              hint: _placeholder(typeId),
+                                              icon: Icons.link_rounded),
+                                          validator: (value) {
+                                            if (value == null ||
+                                                value.trim().isEmpty) {
+                                              return loc
+                                                  .linksDestinationRequired;
+                                            }
+                                            if (value.trim().length > 255) {
+                                              return loc.linksTextTooLong;
+                                            }
+                                            return null;
+                                          }),
+                                      const SizedBox(height: 16),
+                                      DropdownButtonFormField<int>(
+                                          key: ValueKey(
+                                              'link-color-$validColor'),
+                                          initialValue: validColor,
+                                          isExpanded: true,
+                                          decoration: _decoration(
+                                              loc.myLinksColorLabel),
+                                          items: _colors
+                                              .map((item) => DropdownMenuItem(
+                                                  value: _id(item['id']),
+                                                  child: Row(children: [
+                                                    Container(
+                                                        width: 16,
+                                                        height: 16,
+                                                        decoration: BoxDecoration(
+                                                            color: _color(
+                                                                item['color']),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5),
+                                                            border: Border.all(
+                                                                color:
+                                                                    _border))),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                        child: Text(_name(item),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis))
+                                                  ])))
+                                              .toList(),
+                                          onChanged: saving
+                                              ? null
+                                              : (value) =>
+                                                  update(() => colorId = value),
+                                          validator: (value) => value == null
+                                              ? loc.myLinksColorMissing
+                                              : null),
+                                      const SizedBox(height: 24),
+                                      if (error != null) ...[
+                                        Text(error!,
+                                            style: const TextStyle(
+                                                color: Color(0xFFCF354D))),
+                                        const SizedBox(height: 16)
+                                      ],
+                                      SizedBox(
+                                          width: double.infinity,
+                                          child: FilledButton(
+                                              onPressed: saving
+                                                  ? null
+                                                  : () async {
+                                                      if (!form.currentState!
+                                                          .validate()) {
+                                                        return;
+                                                      }
+                                                      FocusScope.of(ctx)
+                                                          .unfocus();
+                                                      update(() {
+                                                        saving = true;
+                                                        error = null;
+                                                      });
+                                                      try {
+                                                        if (!await _hasSession()) {
+                                                          throw Exception();
+                                                        }
+                                                        final payload =
+                                                            jsonEncode({
+                                                          'type_id': validType,
+                                                          'color_id':
+                                                              validColor,
+                                                          'title': title.text
+                                                                  .trim()
+                                                                  .isEmpty
+                                                              ? null
+                                                              : title.text
+                                                                  .trim(),
+                                                          'url': url.text.trim()
+                                                        });
+                                                        final response = link ==
+                                                                null
+                                                            ? await authPost(
+                                                                Uri.parse(
+                                                                    '$apiBaseUrl/api/links'),
+                                                                headers: {
+                                                                  'Content-Type':
+                                                                      'application/json'
+                                                                },
+                                                                body: payload)
+                                                            : await authPut(
+                                                                Uri.parse(
+                                                                    '$apiBaseUrl/api/links/${link['id']}'),
+                                                                headers: {
+                                                                  'Content-Type':
+                                                                      'application/json'
+                                                                },
+                                                                body: payload);
+                                                        if (!ctx.mounted) {
+                                                          return;
+                                                        }
+                                                        if (response.statusCode >=
+                                                                200 &&
+                                                            response.statusCode <
+                                                                300) {
+                                                          update(() =>
+                                                              saving = false);
+                                                          Navigator.of(ctx)
+                                                              .pop();
+                                                          _snack(link == null
+                                                              ? loc
+                                                                  .myLinksCreateSuccess
+                                                              : loc
+                                                                  .myLinksUpdateSuccess);
+                                                          await _fetchLinks();
+                                                        } else {
+                                                          update(() {
+                                                            saving = false;
+                                                            error = _responseError(
+                                                                response,
+                                                                link == null
+                                                                    ? loc
+                                                                        .myLinksCreateFailed
+                                                                    : loc
+                                                                        .myLinksUpdateFailed);
+                                                          });
+                                                        }
+                                                      } catch (_) {
+                                                        if (ctx.mounted) {
+                                                          update(() {
+                                                            saving = false;
+                                                            error = link == null
+                                                                ? loc
+                                                                    .myLinksCreateError
+                                                                : loc
+                                                                    .myLinksUpdateError;
+                                                          });
+                                                        }
+                                                      }
+                                                    },
+                                              style: FilledButton.styleFrom(
+                                                  backgroundColor: _blue,
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      vertical: 16,
+                                                      horizontal: 16),
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              14))),
+                                              child: saving
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              color:
+                                                                  Colors.white,
+                                                              strokeWidth: 2))
+                                                  : Text(link == null
+                                                      ? loc.myLinksAddLink
+                                                      : loc
+                                                          .myLinksUpdateButton))),
+                                    ],
+                                  ])))));
+            });
+          });
+    } finally {
+      await route?.completed;
+      title.dispose();
+      url.dispose();
+      _formOpen = false;
+    }
+  }
+
+  Widget _card(Map<String, dynamic> link, int index) {
+    final type = _lookup(_types, _typeId(link)),
+        color = _lookup(_colors, _colorId(link));
+    final name = link['title']?.toString().trim() ?? '';
+    final title = name.isEmpty ? _name(type) : name;
+    return Container(
+        key: ValueKey('link-${link['id']}'),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _border)),
+        child: Padding(
+            padding: const EdgeInsets.all(16),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFEAF1FF),
+                        borderRadius: BorderRadius.circular(14)),
+                    child:
+                        const Icon(Icons.link_rounded, color: _blue, size: 22)),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text(title.isEmpty ? loc.myLinksLinkType : title,
+                          style: const TextStyle(
+                              color: _ink,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700)),
+                      if (_name(type).isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(_name(type),
+                            style: const TextStyle(color: _muted, fontSize: 12))
+                      ]
+                    ])),
+                if (_deleting.contains(_id(link['id'])))
+                  const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2)))
+                else
+                  PopupMenuButton<String>(
+                      key: ValueKey('link-menu-${link['id']}'),
+                      enabled: !_busy,
+                      tooltip: loc.linksActions,
+                      icon: const Icon(Icons.more_horiz, color: _muted),
+                      onSelected: (action) {
+                        switch (action) {
+                          case 'edit':
+                            _openForm(link: link);
+                          case 'delete':
+                            _delete(link);
+                          case 'up':
+                            _reorder(index, index - 1);
+                          case 'down':
+                            _reorder(index, index + 2);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                            PopupMenuItem(
+                                value: 'edit',
+                                child: Text(loc.myLinksEditTitle)),
+                            if (index > 0)
+                              PopupMenuItem(
+                                  value: 'up', child: Text(loc.linksMoveUp)),
+                            if (index < _links.length - 1)
+                              PopupMenuItem(
+                                  value: 'down',
+                                  child: Text(loc.linksMoveDown)),
+                            PopupMenuItem(
+                                value: 'delete',
+                                child: Text(loc.customersDelete,
+                                    style: const TextStyle(
+                                        color: Color(0xFFCF354D)))),
+                          ]),
+              ]),
+              const SizedBox(height: 14),
+              Text(link['url']?.toString() ?? '',
+                  style: const TextStyle(
+                      color: _muted, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 14),
+              const Divider(height: 1, color: _border),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(
+                    child: Row(children: [
+                  Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: _color(color['color']),
+                          shape: BoxShape.circle)),
+                  const SizedBox(width: 7),
+                  Expanded(
+                      child: Text(_name(color),
+                          style: const TextStyle(color: _muted, fontSize: 12)))
+                ])),
+                if (!_busy)
+                  ReorderableDragStartListener(
+                      index: index,
+                      child: Tooltip(
+                          message: loc.linksDrag,
+                          child: const Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Icon(Icons.drag_indicator_rounded,
+                                  color: _muted, size: 22))))
+              ]),
+            ])));
+  }
+
+  Widget _message(IconData icon, String title, String subtitle,
+          {bool retry = false}) =>
+      Padding(
+          padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+          child: Column(children: [
+            Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFEAF1FF),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Icon(icon, color: _blue, size: 34)),
+            const SizedBox(height: 16),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: _ink, fontSize: 17, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _muted, height: 1.5)),
+            if (retry) ...[
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                  onPressed: _refresh,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(loc.customersRetry))
+            ]
+          ]));
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: disabled ? null : onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: double.infinity,
-          height: 48,
-          decoration: BoxDecoration(
-            color: disabled ? _T.border : _T.accent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: disabled
-                ? []
-                : [
-                    BoxShadow(
-                      color: _T.accent.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-          ),
-          child: Center(
-            child: loading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(
-                    label,
-                    style: TextStyle(
-                      color: disabled ? _T.textSecondary : Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-          ),
-        ),
-      );
+  Widget build(BuildContext context) => Scaffold(
+      backgroundColor: _background,
+      appBar: AppBar(
+          backgroundColor: _background,
+          foregroundColor: _ink,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+              onPressed: _back,
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              icon: const Icon(Icons.arrow_back_rounded)),
+          title: Text(loc.myLinksTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          actions: [
+            IconButton(
+                onPressed: _busy ? null : _refresh,
+                tooltip: loc.refresh,
+                icon: const Icon(Icons.refresh_rounded))
+          ]),
+      body: SafeArea(
+          child: RefreshIndicator(
+              onRefresh: _refresh,
+              color: _blue,
+              child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                        sliver: SliverToBoxAdapter(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                              Text(loc.myLinksTitle,
+                                  style: const TextStyle(
+                                      color: _ink,
+                                      fontSize: 30,
+                                      height: 1.15,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -1)),
+                              const SizedBox(height: 9),
+                              Text(loc.linksSubtitle,
+                                  style: const TextStyle(
+                                      color: _muted,
+                                      fontSize: 14,
+                                      height: 1.5)),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton.icon(
+                                      onPressed: _busy || _loading
+                                          ? null
+                                          : () => _openForm(),
+                                      icon: const Icon(Icons.add_rounded,
+                                          size: 20),
+                                      label: Text(loc.myLinksNewLink),
+                                      style: FilledButton.styleFrom(
+                                          backgroundColor: _blue,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 15),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14))))),
+                              const SizedBox(height: 20),
+                              Text(
+                                  _ordering
+                                      ? loc.myLinksOrderSaving
+                                      : loc.linksOrderHint,
+                                  style: const TextStyle(
+                                      color: _muted,
+                                      fontSize: 12,
+                                      height: 1.5)),
+                            ]))),
+                    if (_loading)
+                      const SliverToBoxAdapter(
+                          child: Padding(
+                              padding: EdgeInsets.all(40),
+                              child: Center(
+                                  child:
+                                      CircularProgressIndicator(color: _blue))))
+                    else if (_loadError != null)
+                      SliverToBoxAdapter(
+                          child: _message(Icons.cloud_off_outlined,
+                              loc.linksLoadError, loc.linksRetryHint,
+                              retry: true))
+                    else if (_links.isEmpty)
+                      SliverToBoxAdapter(
+                          child: _message(
+                              Icons.add_link_rounded,
+                              loc.myLinksNoLinksTitle,
+                              loc.myLinksNoLinksSubtitle))
+                    else
+                      SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          sliver: SliverReorderableList(
+                              itemCount: _links.length,
+                              onReorderItem: (oldIndex, newIndex) => _reorder(
+                                  oldIndex,
+                                  newIndex > oldIndex
+                                      ? newIndex + 1
+                                      : newIndex),
+                              itemBuilder: (_, index) =>
+                                  _card(_links[index], index))),
+                    const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  ]))));
 }
