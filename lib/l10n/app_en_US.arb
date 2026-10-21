@@ -1,0 +1,16 @@
+{
+  "@@locale": "en_US",
+  "appointmentShare": "Share appointment",
+  "appointmentCopyLink": "Copy link",
+  "appointmentLinkCopied": "Link copied",
+  "appointmentCode": "Appointment code",
+  "appointmentDetails": "Appointment details",
+  "appointmentNotes": "Notes",
+  "appointmentStatusLabel": "Status",
+  "appointmentOpenCalendar": "View appointment / add to calendar",
+  "appointmentHistory": "Appointment history",
+  "appointmentShareFailed": "Could not share the appointment. Try copying the link.",
+  "appointmentTimezone": "Time zone",
+  "calendarSubtitle": "Plan your week, view appointment details and share bookings.",
+  "profileDesignIntro": "Make your profile yours. Manage your details, visibility and account settings."
+}

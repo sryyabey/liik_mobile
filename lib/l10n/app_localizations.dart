@@ -6,7 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
-import 'app_localizations_tr.dart';
+import 'app_localizations_id.dart';
+import 'app_localizations_pt.dart';
 
 // ignore_for_file: type=lint
 
@@ -95,7 +96,12 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('tr')
+    Locale('en', 'GB'),
+    Locale('en', 'US'),
+    Locale('id'),
+    Locale('id', 'ID'),
+    Locale('pt'),
+    Locale('pt', 'BR')
   ];
 
   /// No description provided for @loginTitle.
@@ -131,37 +137,37 @@ abstract class AppLocalizations {
   /// No description provided for @onboardTitle1.
   ///
   /// In en, this message translates to:
-  /// **'Create your bio link page and stand out'**
+  /// **'Your world.\nOne simple link.'**
   String get onboardTitle1;
 
   /// No description provided for @onboardDesc1.
   ///
   /// In en, this message translates to:
-  /// **'Collect all your links on one page, share your bagla.app bio link, and make it easier to get discovered.'**
+  /// **'Bring your links, services and everything that makes you, you, together on your Liik page.'**
   String get onboardDesc1;
 
   /// No description provided for @onboardTitle2.
   ///
   /// In en, this message translates to:
-  /// **'Track your appointments in one place'**
+  /// **'Your next booking.\nJust a tap away.'**
   String get onboardTitle2;
 
   /// No description provided for @onboardDesc2.
   ///
   /// In en, this message translates to:
-  /// **'Plan client appointments, send reminders automatically, and run your day with clarity and control.'**
+  /// **'Share your availability. Let visitors choose a time that works, while you focus on your day.'**
   String get onboardDesc2;
 
   /// No description provided for @onboardTitle3.
   ///
   /// In en, this message translates to:
-  /// **'Quick start for independent professionals'**
+  /// **'Show up.\nMake connections.'**
   String get onboardTitle3;
 
   /// No description provided for @onboardDesc3.
   ///
   /// In en, this message translates to:
-  /// **'Go live in minutes, unlock more as your business grows, and keep everything in bagla.app.'**
+  /// **'Create a page that feels like you, share your bio link and connect with new people.'**
   String get onboardDesc3;
 
   /// No description provided for @menuTitle.
@@ -761,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @dashboardShareBio.
   ///
   /// In en, this message translates to:
-  /// **'Bagla bio link'**
+  /// **'Liik bio link'**
   String get dashboardShareBio;
 
   /// No description provided for @dashboardWhatsappSupport.
@@ -4010,12 +4016,6 @@ abstract class AppLocalizations {
   /// **'App Language'**
   String get profileLanguage;
 
-  /// No description provided for @profileLanguageTurkish.
-  ///
-  /// In en, this message translates to:
-  /// **'Turkish'**
-  String get profileLanguageTurkish;
-
   /// No description provided for @profileLanguageEnglish.
   ///
   /// In en, this message translates to:
@@ -4103,7 +4103,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiProfileBannerBadge.
   ///
   /// In en, this message translates to:
-  /// **'Bagla AI Assistant'**
+  /// **'Liik AI Assistant'**
   String get aiProfileBannerBadge;
 
   /// No description provided for @aiProfileBannerTitle.
@@ -4127,7 +4127,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiProfileAiBadge.
   ///
   /// In en, this message translates to:
-  /// **'Bagla AI Assistant'**
+  /// **'Liik AI Assistant'**
   String get aiProfileAiBadge;
 
   /// No description provided for @aiProfileSubtitle.
@@ -4229,7 +4229,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiProfileMsgAnalyzing.
   ///
   /// In en, this message translates to:
-  /// **'Analysing your profile...'**
+  /// **'Analyzing your profile...'**
   String get aiProfileMsgAnalyzing;
 
   /// No description provided for @aiProfileMsgPreparing.
@@ -4247,7 +4247,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiProfileMsgSeo.
   ///
   /// In en, this message translates to:
-  /// **'Applying SEO optimisation...'**
+  /// **'Applying SEO optimization...'**
   String get aiProfileMsgSeo;
 
   /// No description provided for @aiProfileMsgFinalizing.
@@ -4343,7 +4343,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiProfileFieldAchievementHint.
   ///
   /// In en, this message translates to:
-  /// **'Turkish Dietitians Association'**
+  /// **'Professional association'**
   String get aiProfileFieldAchievementHint;
 
   /// No description provided for @aiProfileFieldNote.
@@ -4519,6 +4519,1638 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save links (HTTP {status}).'**
   String aiProfileLinksHttpError(Object status);
+
+  /// No description provided for @onboardBadge1.
+  ///
+  /// In en, this message translates to:
+  /// **'A SPACE OF YOUR OWN'**
+  String get onboardBadge1;
+
+  /// No description provided for @onboardBadge2.
+  ///
+  /// In en, this message translates to:
+  /// **'SIMPLER SCHEDULING'**
+  String get onboardBadge2;
+
+  /// No description provided for @onboardBadge3.
+  ///
+  /// In en, this message translates to:
+  /// **'READY TO SHARE'**
+  String get onboardBadge3;
+
+  /// No description provided for @onboardSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardSkip;
+
+  /// No description provided for @onboardContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get onboardContinue;
+
+  /// No description provided for @onboardStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started with Liik'**
+  String get onboardStart;
+
+  /// No description provided for @onboardLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Log in'**
+  String get onboardLogin;
+
+  /// No description provided for @onboardPreviewName.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi, I’m Alex'**
+  String get onboardPreviewName;
+
+  /// No description provided for @onboardPreviewTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating. Sharing. Connecting.'**
+  String get onboardPreviewTagline;
+
+  /// No description provided for @onboardPreviewExplore.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore my world'**
+  String get onboardPreviewExplore;
+
+  /// No description provided for @onboardPreviewBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Let’s find a time'**
+  String get onboardPreviewBook;
+
+  /// No description provided for @onboardPreviewCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Discovery call'**
+  String get onboardPreviewCall;
+
+  /// No description provided for @onboardPreviewDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'30 min · Online'**
+  String get onboardPreviewDuration;
+
+  /// No description provided for @onboardPreviewReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Your bio link is ready'**
+  String get onboardPreviewReady;
+
+  /// No description provided for @onboardPreviewShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add it to your profile. Get discovered.'**
+  String get onboardPreviewShareHint;
+
+  /// No description provided for @onboardPreviewConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'One link. New connections.'**
+  String get onboardPreviewConnections;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to your account and pick up where you left off'**
+  String get loginSubtitle;
+
+  /// No description provided for @loginOr.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get loginOr;
+
+  /// No description provided for @loginNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don’t have an account?'**
+  String get loginNoAccount;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get registerTitle;
+
+  /// No description provided for @registerConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get registerConfirmPassword;
+
+  /// No description provided for @registerUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username (optional)'**
+  String get registerUsername;
+
+  /// No description provided for @registerSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get registerSubmit;
+
+  /// No description provided for @registerError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred during registration.'**
+  String get registerError;
+
+  /// No description provided for @authTokenMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not retrieve the sign-in token.'**
+  String get authTokenMissing;
+
+  /// No description provided for @authUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in was not authorized.'**
+  String get authUnauthorized;
+
+  /// No description provided for @authGoogleCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in was cancelled.'**
+  String get authGoogleCancelled;
+
+  /// No description provided for @authGoogleTokenMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not retrieve the Google sign-in token.'**
+  String get authGoogleTokenMissing;
+
+  /// No description provided for @verifyEmailPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Email not verified yet. Check your inbox.'**
+  String get verifyEmailPending;
+
+  /// No description provided for @authConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to the server.'**
+  String get authConnectionError;
+
+  /// No description provided for @verifyEmailResent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent again.'**
+  String get verifyEmailResent;
+
+  /// No description provided for @commonSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send.'**
+  String get commonSendFailed;
+
+  /// No description provided for @verifyEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get verifyEmailTitle;
+
+  /// No description provided for @verifyEmailCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'I’ve verified my email'**
+  String get verifyEmailCheck;
+
+  /// No description provided for @verifyEmailResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get verifyEmailResend;
+
+  /// No description provided for @verifyEmailOtherAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with a different account'**
+  String get verifyEmailOtherAccount;
+
+  /// No description provided for @dashboardImageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the image.'**
+  String get dashboardImageFailed;
+
+  /// No description provided for @commonNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get commonNoResults;
+
+  /// No description provided for @dashboardPackageActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your package is active! 🎉'**
+  String get dashboardPackageActivated;
+
+  /// No description provided for @commonError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get commonError;
+
+  /// No description provided for @dashboardWelcomeGiftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim your welcome gift'**
+  String get dashboardWelcomeGiftTitle;
+
+  /// No description provided for @dashboardWelcomeGiftDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the form to activate 100 free SMS for one month.'**
+  String get dashboardWelcomeGiftDescription;
+
+  /// No description provided for @commonChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Select...'**
+  String get commonChoose;
+
+  /// No description provided for @dashboardCityRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'City *'**
+  String get dashboardCityRequired;
+
+  /// No description provided for @dashboardCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. New York'**
+  String get dashboardCityHint;
+
+  /// No description provided for @dashboardInstagramOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Instagram (optional)'**
+  String get dashboardInstagramOptional;
+
+  /// No description provided for @dashboardActivatePackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate package'**
+  String get dashboardActivatePackage;
+
+  /// No description provided for @dashboardWelcomeGiftBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'WELCOME GIFT'**
+  String get dashboardWelcomeGiftBadge;
+
+  /// No description provided for @dashboardWelcomeGiftOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'100 free SMS for one month'**
+  String get dashboardWelcomeGiftOffer;
+
+  /// No description provided for @dashboardWelcomeGiftHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your gift is waiting. Complete the form to activate it.'**
+  String get dashboardWelcomeGiftHint;
+
+  /// No description provided for @dashboardReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoying Liik?'**
+  String get dashboardReviewTitle;
+
+  /// No description provided for @dashboardReviewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your review helps us grow.'**
+  String get dashboardReviewHint;
+
+  /// No description provided for @dashboardReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Liik'**
+  String get dashboardReviewAction;
+
+  /// No description provided for @commonView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get commonView;
+
+  /// No description provided for @dashboardTopUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up'**
+  String get dashboardTopUp;
+
+  /// No description provided for @dashboardFeedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How is your Liik experience?'**
+  String get dashboardFeedbackTitle;
+
+  /// No description provided for @dashboardFeedbackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your experience to help us improve.'**
+  String get dashboardFeedbackHint;
+
+  /// No description provided for @dashboardFeedbackComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Your comment (optional)...'**
+  String get dashboardFeedbackComment;
+
+  /// No description provided for @dashboardFeedbackSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit review'**
+  String get dashboardFeedbackSubmit;
+
+  /// No description provided for @commonNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get commonNotNow;
+
+  /// No description provided for @ratingVeryBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Very bad'**
+  String get ratingVeryBad;
+
+  /// No description provided for @ratingBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Bad'**
+  String get ratingBad;
+
+  /// No description provided for @ratingGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get ratingGood;
+
+  /// No description provided for @ratingExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent!'**
+  String get ratingExcellent;
+
+  /// No description provided for @ratingSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a rating'**
+  String get ratingSelect;
+
+  /// No description provided for @workingTemplateAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon'**
+  String get workingTemplateAfternoon;
+
+  /// No description provided for @workingTemplateEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening'**
+  String get workingTemplateEvening;
+
+  /// No description provided for @announcementWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get announcementWarning;
+
+  /// No description provided for @announcementUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get announcementUpdate;
+
+  /// No description provided for @announcementConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error.'**
+  String get announcementConnectionError;
+
+  /// No description provided for @announcementReadAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get announcementReadAll;
+
+  /// No description provided for @announcementEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No announcements yet'**
+  String get announcementEmpty;
+
+  /// No description provided for @announcementDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download update'**
+  String get announcementDownload;
+
+  /// No description provided for @blogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles'**
+  String get blogTitle;
+
+  /// No description provided for @blogViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get blogViewAll;
+
+  /// No description provided for @blogLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load articles.'**
+  String get blogLoadFailed;
+
+  /// No description provided for @commonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get commonAll;
+
+  /// No description provided for @blogEmptyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No articles in this category yet'**
+  String get blogEmptyCategory;
+
+  /// No description provided for @blogReadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read more'**
+  String get blogReadMore;
+
+  /// No description provided for @aiProfileBioPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio page preview'**
+  String get aiProfileBioPreview;
+
+  /// No description provided for @aiProfileConversionPage.
+  ///
+  /// In en, this message translates to:
+  /// **'My booking page'**
+  String get aiProfileConversionPage;
+
+  /// No description provided for @aiProfileConversionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn followers into bookings'**
+  String get aiProfileConversionHint;
+
+  /// No description provided for @aiProfilePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Page title'**
+  String get aiProfilePageTitle;
+
+  /// No description provided for @aiProfileMetaPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Your meta description appears here. Describe your page for search results.'**
+  String get aiProfileMetaPlaceholder;
+
+  /// No description provided for @aiProfileGooglePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Google search preview'**
+  String get aiProfileGooglePreview;
+
+  /// No description provided for @aiProfileSeoWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get aiProfileSeoWeak;
+
+  /// No description provided for @aiProfileSeoExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get aiProfileSeoExcellent;
+
+  /// No description provided for @aiProfileThemeAutoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a theme to save it automatically'**
+  String get aiProfileThemeAutoSave;
+
+  /// No description provided for @aiProfileEditLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit my links'**
+  String get aiProfileEditLinks;
+
+  /// No description provided for @aiProfilePreviewLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading preview...'**
+  String get aiProfilePreviewLoading;
+
+  /// No description provided for @aiProfilePreviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load preview'**
+  String get aiProfilePreviewFailed;
+
+  /// No description provided for @professionTrainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal trainer'**
+  String get professionTrainer;
+
+  /// No description provided for @professionBeautician.
+  ///
+  /// In en, this message translates to:
+  /// **'Beauty professional'**
+  String get professionBeautician;
+
+  /// No description provided for @professionCoach.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach & consultant'**
+  String get professionCoach;
+
+  /// No description provided for @aiProfileProfessionTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick start for your profession'**
+  String get aiProfileProfessionTemplate;
+
+  /// No description provided for @aiProfileReorderLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag and drop to reorder active links'**
+  String get aiProfileReorderLinks;
+
+  /// No description provided for @appointmentDateTimeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'DATE & TIME'**
+  String get appointmentDateTimeHeading;
+
+  /// No description provided for @authRegisterFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration failed (HTTP {status}).'**
+  String authRegisterFailed(int status);
+
+  /// No description provided for @authLoginFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed (HTTP {status}).'**
+  String authLoginFailed(int status);
+
+  /// No description provided for @authGoogleFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in failed (HTTP {status}).'**
+  String authGoogleFailed(int status);
+
+  /// No description provided for @authConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to the server: {error}'**
+  String authConnectionFailed(String error);
+
+  /// No description provided for @authGoogleError.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in failed: {error}'**
+  String authGoogleError(String error);
+
+  /// No description provided for @authAppleError.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple sign-in failed: {error}'**
+  String authAppleError(String error);
+
+  /// No description provided for @verifyEmailFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check verification (HTTP {status}).'**
+  String verifyEmailFailed(int status);
+
+  /// No description provided for @verifyEmailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a verification link to {email}. Open the link, then tap the button below.'**
+  String verifyEmailDescription(String email);
+
+  /// No description provided for @verifyEmailResendCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend ({seconds}s)'**
+  String verifyEmailResendCountdown(int seconds);
+
+  /// No description provided for @announcementInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get announcementInfo;
+
+  /// No description provided for @announcementPromo.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer'**
+  String get announcementPromo;
+
+  /// No description provided for @announcementFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'New feature'**
+  String get announcementFeature;
+
+  /// No description provided for @announcementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcement'**
+  String get announcementTitle;
+
+  /// No description provided for @announcementsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get announcementsTitle;
+
+  /// No description provided for @ratingAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get ratingAverage;
+
+  /// No description provided for @workingTemplateStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get workingTemplateStandard;
+
+  /// No description provided for @workingTemplateExpert.
+  ///
+  /// In en, this message translates to:
+  /// **'Expert'**
+  String get workingTemplateExpert;
+
+  /// No description provided for @workingTemplateWeekend.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekend'**
+  String get workingTemplateWeekend;
+
+  /// No description provided for @professionDietitian.
+  ///
+  /// In en, this message translates to:
+  /// **'Dietitian'**
+  String get professionDietitian;
+
+  /// No description provided for @professionPsychologist.
+  ///
+  /// In en, this message translates to:
+  /// **'Psychologist'**
+  String get professionPsychologist;
+
+  /// No description provided for @professionPhysiotherapist.
+  ///
+  /// In en, this message translates to:
+  /// **'Physiotherapist'**
+  String get professionPhysiotherapist;
+
+  /// No description provided for @aiToneFriendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Friendly'**
+  String get aiToneFriendly;
+
+  /// No description provided for @aiToneFriendlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm, natural language'**
+  String get aiToneFriendlyHint;
+
+  /// No description provided for @aiToneProfessional.
+  ///
+  /// In en, this message translates to:
+  /// **'Professional'**
+  String get aiToneProfessional;
+
+  /// No description provided for @aiToneProfessionalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Formal and reassuring'**
+  String get aiToneProfessionalHint;
+
+  /// No description provided for @aiToneWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm'**
+  String get aiToneWarm;
+
+  /// No description provided for @aiToneWarmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Empathetic and approachable'**
+  String get aiToneWarmHint;
+
+  /// No description provided for @linkLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get linkLocation;
+
+  /// No description provided for @linkWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get linkWebsite;
+
+  /// No description provided for @previewLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load preview: {error}'**
+  String previewLoadError(String error);
+
+  /// No description provided for @announcementLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load announcements (HTTP {status}).'**
+  String announcementLoadFailed(int status);
+
+  /// No description provided for @announcementMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min ago'**
+  String announcementMinutesAgo(int count);
+
+  /// No description provided for @announcementHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} hr ago'**
+  String announcementHoursAgo(int count);
+
+  /// No description provided for @announcementDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days ago'**
+  String announcementDaysAgo(int count);
+
+  /// No description provided for @dashboardLowSms.
+  ///
+  /// In en, this message translates to:
+  /// **'Your SMS balance is low — {count} messages left.'**
+  String dashboardLowSms(int count);
+
+  /// No description provided for @workingTemplateStandardDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon–Fri 09:00–12:00 / 13:00–17:00 · 20 min'**
+  String get workingTemplateStandardDescription;
+
+  /// No description provided for @workingTemplateAfternoonDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon–Fri 13:00–17:00 · 20 min'**
+  String get workingTemplateAfternoonDescription;
+
+  /// No description provided for @workingTemplateExpertDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon–Sat 09:00–12:00 / 13:00–17:00 · 20 min'**
+  String get workingTemplateExpertDescription;
+
+  /// No description provided for @workingTemplateEveningDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon–Sat 17:00–21:00 · 45 min'**
+  String get workingTemplateEveningDescription;
+
+  /// No description provided for @workingTemplateWeekendDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sat–Sun 10:00–17:00 · 30 min'**
+  String get workingTemplateWeekendDescription;
+
+  /// No description provided for @loginWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back.'**
+  String get loginWelcome;
+
+  /// No description provided for @loginWelcomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your links, your bookings, your next connection. All in one place.'**
+  String get loginWelcomeDescription;
+
+  /// No description provided for @loginEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get loginEmailHint;
+
+  /// No description provided for @loginPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get loginPasswordHint;
+
+  /// No description provided for @loginShowPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get loginShowPassword;
+
+  /// No description provided for @loginHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get loginHidePassword;
+
+  /// No description provided for @loginEmailValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get loginEmailValidation;
+
+  /// No description provided for @loginPasswordValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password.'**
+  String get loginPasswordValidation;
+
+  /// No description provided for @loginApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Apple'**
+  String get loginApple;
+
+  /// No description provided for @dashboardWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Your day, connected.'**
+  String get dashboardWelcome;
+
+  /// No description provided for @dashboardBioHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One link for your world. Share it wherever people find you.'**
+  String get dashboardBioHint;
+
+  /// No description provided for @dashboardCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get dashboardCopyLink;
+
+  /// No description provided for @dashboardBioEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your next connection starts here.'**
+  String get dashboardBioEmptyTitle;
+
+  /// No description provided for @dashboardBioEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your Liik page to bring your links and bookings together.'**
+  String get dashboardBioEmptyHint;
+
+  /// No description provided for @dashboardScheduleEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A little room in your day. Add an appointment or share your booking page.'**
+  String get dashboardScheduleEmptyHint;
+
+  /// No description provided for @dashboardViewAppointments.
+  ///
+  /// In en, this message translates to:
+  /// **'View appointments'**
+  String get dashboardViewAppointments;
+
+  /// No description provided for @dashboardAnnouncements.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new announcements'**
+  String dashboardAnnouncements(int count);
+
+  /// No description provided for @appointmentsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'A little more organized.'**
+  String get appointmentsHeading;
+
+  /// No description provided for @appointmentsInView.
+  ///
+  /// In en, this message translates to:
+  /// **'In this view'**
+  String get appointmentsInView;
+
+  /// No description provided for @appointmentsPlanRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current plan does not include appointment management.'**
+  String get appointmentsPlanRequired;
+
+  /// No description provided for @calendarLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this week. Please try again.'**
+  String get calendarLoadError;
+
+  /// No description provided for @contactsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your people, all in one place. Keep details and appointments together.'**
+  String get contactsSubtitle;
+
+  /// No description provided for @contactsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get contactsAll;
+
+  /// No description provided for @contactsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 contact} other{{count} contacts}}'**
+  String contactsCount(int count);
+
+  /// No description provided for @contactsNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching contacts. Try another name, phone number or email.'**
+  String get contactsNoResults;
+
+  /// No description provided for @contactsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load contacts. Please try again.'**
+  String get contactsLoadError;
+
+  /// No description provided for @contactsSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this contact. Please try again.'**
+  String get contactsSaveError;
+
+  /// No description provided for @contactsPhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number with up to 15 digits.'**
+  String get contactsPhoneInvalid;
+
+  /// No description provided for @contactsEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get contactsEmailInvalid;
+
+  /// No description provided for @linksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your links, your way. Bring everything you share onto your Liik page.'**
+  String get linksSubtitle;
+
+  /// No description provided for @linksFormSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a link type, add a destination and make it yours.'**
+  String get linksFormSubtitle;
+
+  /// No description provided for @linksOrderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the handle to change the order on your page.'**
+  String get linksOrderHint;
+
+  /// No description provided for @linksOrderError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the order. Your previous order has been restored.'**
+  String get linksOrderError;
+
+  /// No description provided for @linksLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your links.'**
+  String get linksLoadError;
+
+  /// No description provided for @linksRetryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your connection and try again.'**
+  String get linksRetryHint;
+
+  /// No description provided for @linksSettingsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Link types and colors could not be loaded. Please try again.'**
+  String get linksSettingsError;
+
+  /// No description provided for @linksDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this link?'**
+  String get linksDeleteTitle;
+
+  /// No description provided for @linksDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This link will be removed from your Liik page.'**
+  String get linksDeleteBody;
+
+  /// No description provided for @linksDestinationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a destination for this link.'**
+  String get linksDestinationRequired;
+
+  /// No description provided for @linksTextTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 255 characters or fewer.'**
+  String get linksTextTooLong;
+
+  /// No description provided for @linksMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get linksMoveUp;
+
+  /// No description provided for @linksMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get linksMoveDown;
+
+  /// No description provided for @linksDrag.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get linksDrag;
+
+  /// No description provided for @linksActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Link actions'**
+  String get linksActions;
+
+  /// No description provided for @themesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make your Liik page feel like you. Choose a theme and preview your look.'**
+  String get themesSubtitle;
+
+  /// No description provided for @themesCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current theme'**
+  String get themesCurrent;
+
+  /// No description provided for @themesUnsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Previewing a new theme · not saved yet'**
+  String get themesUnsaved;
+
+  /// No description provided for @themesApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme applied'**
+  String get themesApplied;
+
+  /// No description provided for @themesRefreshPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh preview'**
+  String get themesRefreshPreview;
+
+  /// No description provided for @themesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load themes. Please try again.'**
+  String get themesLoadError;
+
+  /// No description provided for @themesSaveErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this theme. Please try again.'**
+  String get themesSaveErrorMessage;
+
+  /// No description provided for @themesViewPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'View preview'**
+  String get themesViewPreview;
+
+  /// No description provided for @profileTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Local time zone'**
+  String get profileTimezone;
+
+  /// No description provided for @profileTimezoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your appointments and working hours use this time zone. Daylight saving changes are handled automatically.'**
+  String get profileTimezoneHint;
+
+  /// No description provided for @profileTimezoneSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search city or time zone'**
+  String get profileTimezoneSearch;
+
+  /// No description provided for @profileTimezoneLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load time zones. Please try again.'**
+  String get profileTimezoneLoadError;
+
+  /// No description provided for @supportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Need a hand? Talk to us and keep track of your support requests here.'**
+  String get supportSubtitle;
+
+  /// No description provided for @supportFormHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what happened and how we can help.'**
+  String get supportFormHint;
+
+  /// No description provided for @supportActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get supportActive;
+
+  /// No description provided for @supportFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved & closed'**
+  String get supportFinished;
+
+  /// No description provided for @supportFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No requests in this category.'**
+  String get supportFilterEmpty;
+
+  /// No description provided for @supportLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load support requests. Please try again.'**
+  String get supportLoadError;
+
+  /// No description provided for @supportSendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send your message. Please try again.'**
+  String get supportSendError;
+
+  /// No description provided for @supportCloseError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not close this request. Please try again.'**
+  String get supportCloseError;
+
+  /// No description provided for @supportMessageTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Write at least 5 characters.'**
+  String get supportMessageTooShort;
+
+  /// No description provided for @supportReplyTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Write at least 2 characters.'**
+  String get supportReplyTooShort;
+
+  /// No description provided for @supportCloseConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Close this request? You will no longer be able to reply to it.'**
+  String get supportCloseConfirm;
+
+  /// No description provided for @supportInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get supportInProgress;
+
+  /// No description provided for @supportResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get supportResolved;
+
+  /// No description provided for @supportPriorityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low priority'**
+  String get supportPriorityLow;
+
+  /// No description provided for @supportPriorityMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal priority'**
+  String get supportPriorityMedium;
+
+  /// No description provided for @supportPriorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High priority'**
+  String get supportPriorityHigh;
+
+  /// No description provided for @supportPriorityUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get supportPriorityUrgent;
+
+  /// No description provided for @analyticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get analyticsTitle;
+
+  /// No description provided for @analyticsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'See how people discover your profile and interact with your links.'**
+  String get analyticsIntro;
+
+  /// No description provided for @analyticsPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting period'**
+  String get analyticsPeriod;
+
+  /// No description provided for @analyticsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days'**
+  String analyticsDays(int count);
+
+  /// No description provided for @analyticsOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get analyticsOverview;
+
+  /// No description provided for @analyticsLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Link performance'**
+  String get analyticsLinks;
+
+  /// No description provided for @analyticsAudience.
+  ///
+  /// In en, this message translates to:
+  /// **'Audience'**
+  String get analyticsAudience;
+
+  /// No description provided for @analyticsConversions.
+  ///
+  /// In en, this message translates to:
+  /// **'Click-through'**
+  String get analyticsConversions;
+
+  /// No description provided for @analyticsClicks.
+  ///
+  /// In en, this message translates to:
+  /// **'Link clicks'**
+  String get analyticsClicks;
+
+  /// No description provided for @analyticsVisitors.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique visitors'**
+  String get analyticsVisitors;
+
+  /// No description provided for @analyticsUniqueClicks.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique clickers'**
+  String get analyticsUniqueClicks;
+
+  /// No description provided for @analyticsRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Click-through rate'**
+  String get analyticsRate;
+
+  /// No description provided for @analyticsRedirects.
+  ///
+  /// In en, this message translates to:
+  /// **'Redirect page views'**
+  String get analyticsRedirects;
+
+  /// No description provided for @analyticsPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'vs. previous period'**
+  String get analyticsPrevious;
+
+  /// No description provided for @analyticsNoPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous baseline'**
+  String get analyticsNoPrevious;
+
+  /// No description provided for @analyticsUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'No change'**
+  String get analyticsUnchanged;
+
+  /// No description provided for @analyticsTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily link clicks'**
+  String get analyticsTrend;
+
+  /// No description provided for @analyticsTrendHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Total clicks and unique clickers for each day.'**
+  String get analyticsTrendHint;
+
+  /// No description provided for @analyticsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity in this period'**
+  String get analyticsEmpty;
+
+  /// No description provided for @analyticsEmptyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits and link clicks will appear here as people use your profile.'**
+  String get analyticsEmptyText;
+
+  /// No description provided for @analyticsTopLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Top links'**
+  String get analyticsTopLinks;
+
+  /// No description provided for @analyticsLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get analyticsLink;
+
+  /// No description provided for @analyticsShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share of clicks'**
+  String get analyticsShare;
+
+  /// No description provided for @analyticsNoLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'No link clicks yet.'**
+  String get analyticsNoLinks;
+
+  /// No description provided for @analyticsViews.
+  ///
+  /// In en, this message translates to:
+  /// **'Visitors'**
+  String get analyticsViews;
+
+  /// No description provided for @analyticsFunnel.
+  ///
+  /// In en, this message translates to:
+  /// **'From profile to links'**
+  String get analyticsFunnel;
+
+  /// No description provided for @analyticsFunnelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique visitors and unique clickers are counted separately for the selected period.'**
+  String get analyticsFunnelHint;
+
+  /// No description provided for @analyticsManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get analyticsManual;
+
+  /// No description provided for @analyticsAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get analyticsAutomatic;
+
+  /// No description provided for @analyticsNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation methods'**
+  String get analyticsNavigation;
+
+  /// No description provided for @analyticsNavigationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How visitors move from redirect pages to destinations.'**
+  String get analyticsNavigationHint;
+
+  /// No description provided for @analyticsSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic sources'**
+  String get analyticsSources;
+
+  /// No description provided for @analyticsDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get analyticsDevices;
+
+  /// No description provided for @analyticsPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'Platforms'**
+  String get analyticsPlatforms;
+
+  /// No description provided for @analyticsBrowsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Browsers'**
+  String get analyticsBrowsers;
+
+  /// No description provided for @analyticsCountries.
+  ///
+  /// In en, this message translates to:
+  /// **'Countries'**
+  String get analyticsCountries;
+
+  /// No description provided for @analyticsHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Clicks by hour'**
+  String get analyticsHours;
+
+  /// No description provided for @analyticsWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Clicks by weekday'**
+  String get analyticsWeekdays;
+
+  /// No description provided for @analyticsUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get analyticsUnknown;
+
+  /// No description provided for @analyticsMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile'**
+  String get analyticsMobile;
+
+  /// No description provided for @analyticsDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop'**
+  String get analyticsDesktop;
+
+  /// No description provided for @analyticsTablet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tablet'**
+  String get analyticsTablet;
+
+  /// No description provided for @analyticsTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Report time zone: {timezone}'**
+  String analyticsTimezone(String timezone);
+
+  /// No description provided for @analyticsDataNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Only recorded activity is included. Unique metrics use anonymous visitor identifiers.'**
+  String get analyticsDataNote;
+
+  /// No description provided for @analyticsRateNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique clickers divided by unique profile visitors. This measures link engagement.'**
+  String get analyticsRateNote;
+
+  /// No description provided for @analyticsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load analytics. Please try again.'**
+  String get analyticsLoadError;
+
+  /// No description provided for @themesFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get themesFree;
+
+  /// No description provided for @themesPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get themesPremium;
+
+  /// No description provided for @themesClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get themesClassic;
+
+  /// No description provided for @appointmentShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share appointment'**
+  String get appointmentShare;
+
+  /// No description provided for @appointmentCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get appointmentCopyLink;
+
+  /// No description provided for @appointmentLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get appointmentLinkCopied;
+
+  /// No description provided for @appointmentCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment code'**
+  String get appointmentCode;
+
+  /// No description provided for @appointmentDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment details'**
+  String get appointmentDetails;
+
+  /// No description provided for @appointmentNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get appointmentNotes;
+
+  /// No description provided for @appointmentStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get appointmentStatusLabel;
+
+  /// No description provided for @appointmentOpenCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'View appointment / add to calendar'**
+  String get appointmentOpenCalendar;
+
+  /// No description provided for @appointmentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment history'**
+  String get appointmentHistory;
+
+  /// No description provided for @appointmentShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share the appointment. Try copying the link.'**
+  String get appointmentShareFailed;
+
+  /// No description provided for @appointmentTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get appointmentTimezone;
+
+  /// No description provided for @calendarSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan your week, view appointment details and share bookings.'**
+  String get calendarSubtitle;
+
+  /// No description provided for @profileDesignIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Make your profile yours. Manage your details, visibility and account settings.'**
+  String get profileDesignIntro;
 }
 
 class _AppLocalizationsDelegate
@@ -4532,19 +6164,51 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'tr'].contains(locale.languageCode);
+      <String>['en', 'id', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'en':
+      {
+        switch (locale.countryCode) {
+          case 'GB':
+            return AppLocalizationsEnGb();
+          case 'US':
+            return AppLocalizationsEnUs();
+        }
+        break;
+      }
+    case 'id':
+      {
+        switch (locale.countryCode) {
+          case 'ID':
+            return AppLocalizationsIdId();
+        }
+        break;
+      }
+    case 'pt':
+      {
+        switch (locale.countryCode) {
+          case 'BR':
+            return AppLocalizationsPtBr();
+        }
+        break;
+      }
+  }
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
-    case 'tr':
-      return AppLocalizationsTr();
+    case 'id':
+      return AppLocalizationsId();
+    case 'pt':
+      return AppLocalizationsPt();
   }
 
   throw FlutterError(

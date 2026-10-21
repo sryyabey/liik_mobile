@@ -316,7 +316,7 @@ class _OrdersPageState extends State<OrdersPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    order['pack_name']?.toString() ?? 'Sipariş',
+                    order['pack_name']?.toString() ?? AppLocalizations.of(context).ordersDetailTitle,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,

@@ -1,0 +1,16 @@
+{
+  "@@locale": "pt_BR",
+  "appointmentShare": "Compartilhar agendamento",
+  "appointmentCopyLink": "Copiar link",
+  "appointmentLinkCopied": "Link copiado",
+  "appointmentCode": "Código do agendamento",
+  "appointmentDetails": "Detalhes do agendamento",
+  "appointmentNotes": "Notas",
+  "appointmentStatusLabel": "Status",
+  "appointmentOpenCalendar": "Ver agendamento / adicionar ao calendário",
+  "appointmentHistory": "Histórico de agendamentos",
+  "appointmentShareFailed": "Não foi possível compartilhar. Tente copiar o link.",
+  "appointmentTimezone": "Fuso horário",
+  "calendarSubtitle": "Planeje sua semana, veja os detalhes e compartilhe agendamentos.",
+  "profileDesignIntro": "Deixe seu perfil com a sua cara. Gerencie seus dados, visibilidade e conta."
+}

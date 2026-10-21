@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+import 'package:bagla_mobile/l10n/app_localizations.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -231,14 +233,7 @@ Widget _thumb(BlogPostCard post, {double? width, double? height, double radius =
   );
 }
 
-String _fmtDate(DateTime? dt) {
-  if (dt == null) return '';
-  const months = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-  ];
-  return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-}
+String _fmtDate(BuildContext context, DateTime? dt) => dt == null ? '' : DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(dt);
 
 Widget _categoryBadge(BlogPostCard post) {
   if (post.categoryName == null) return const SizedBox.shrink();
@@ -311,8 +306,8 @@ class _BlogHighlightsStripState extends State<BlogHighlightsStrip> {
                 child: const Icon(Icons.menu_book_rounded, size: 17, color: _kAccent),
               ),
               const SizedBox(width: 10),
-              const Text('İçerikler',
-                  style: TextStyle(
+              Text(AppLocalizations.of(context).blogTitle,
+                  style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w800, color: _kInk)),
               const Spacer(),
               TextButton(
@@ -322,8 +317,8 @@ class _BlogHighlightsStripState extends State<BlogHighlightsStrip> {
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                child: const Text('Tümünü gör',
-                    style: TextStyle(
+                child: Text(AppLocalizations.of(context).blogViewAll,
+                    style: const TextStyle(
                         color: _kAccent, fontWeight: FontWeight.w600, fontSize: 13)),
               ),
             ],
@@ -465,7 +460,7 @@ class _BlogPageState extends State<BlogPage> {
         _hasMore = res.hasMore;
       });
     } catch (_) {
-      setState(() => _error = 'İçerikler yüklenemedi.');
+      setState(() => _error = AppLocalizations.of(context).blogLoadFailed);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -572,7 +567,7 @@ class _BlogPageState extends State<BlogPage> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         children: [
-          _chip('Tümü', null),
+          _chip(AppLocalizations.of(context).commonAll, null),
           for (final c in _categories) _chip(c.name, c.slug),
         ],
       ),
@@ -609,13 +604,13 @@ class _BlogPageState extends State<BlogPage> {
   }
 
   Widget _emptyView() => ListView(
-        children: const [
-          SizedBox(height: 120),
-          Icon(Icons.menu_book_outlined, size: 52, color: Color(0xFFD1D5DB)),
-          SizedBox(height: 12),
+        children: [
+          const SizedBox(height: 120),
+          const Icon(Icons.menu_book_outlined, size: 52, color: const Color(0xFFD1D5DB)),
+          const SizedBox(height: 12),
           Center(
-            child: Text('Bu kategoride henüz içerik yok',
-                style: TextStyle(color: _kMuted, fontWeight: FontWeight.w500)),
+            child: Text(AppLocalizations.of(context).blogEmptyCategory,
+                style: const TextStyle(color: _kMuted, fontWeight: FontWeight.w500)),
           ),
         ],
       );
@@ -671,7 +666,7 @@ class _BlogListCard extends StatelessWidget {
                       _categoryBadge(post),
                       const Spacer(),
                       if (post.publishedAt != null)
-                        Text(_fmtDate(post.publishedAt),
+                        Text(_fmtDate(context, post.publishedAt),
                             style: const TextStyle(color: _kMuted, fontSize: 11)),
                     ],
                   ),
@@ -697,7 +692,7 @@ class _BlogListCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Text('Devamını oku',
+                      Text(AppLocalizations.of(context).blogReadMore,
                           style: TextStyle(
                               color: _colorForSlug(post.categorySlug),
                               fontWeight: FontWeight.w700,

@@ -5,12 +5,12 @@
   "passwordLabel": "Password",
   "facebookLogin": "Continue with Facebook",
   "googleLogin": "Continue with Google",
-  "onboardTitle1": "Create your bio link page and stand out",
-  "onboardDesc1": "Collect all your links on one page, share your bagla.app bio link, and make it easier to get discovered.",
-  "onboardTitle2": "Track your appointments in one place",
-  "onboardDesc2": "Plan client appointments, send reminders automatically, and run your day with clarity and control.",
-  "onboardTitle3": "Quick start for independent professionals",
-  "onboardDesc3": "Go live in minutes, unlock more as your business grows, and keep everything in bagla.app.",
+  "onboardTitle1": "Your world.\nOne simple link.",
+  "onboardDesc1": "Bring your links, services and everything that makes you, you, together on your Liik page.",
+  "onboardTitle2": "Your next booking.\nJust a tap away.",
+  "onboardDesc2": "Share your availability. Let visitors choose a time that works, while you focus on your day.",
+  "onboardTitle3": "Show up.\nMake connections.",
+  "onboardDesc3": "Create a page that feels like you, share your bio link and connect with new people.",
   "menuTitle": "Menu",
   "myLinks": "My Links",
   "customersTitle": "My Contacts",
@@ -115,7 +115,7 @@
   "dashboardLinkOpenFailed": "Link could not be opened.",
   "dashboardWhatsAppFailed": "WhatsApp could not be opened.",
   "dashboardWhatsAppFailedWithError": "WhatsApp could not be opened: {error}",
-  "dashboardShareBio": "Bagla bio link",
+  "dashboardShareBio": "Liik bio link",
   "dashboardWhatsappSupport": "WhatsApp Support",
   "appointmentManagement": "Appointment Management",
   "appointmentSubtitle": "Track your daily appointments and create new ones quickly.",
@@ -709,7 +709,9 @@
   "workingPrefsTemplatesApplied": "{name} template applied.",
   "@workingPrefsTemplatesApplied": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "workingPrefsTemplatesConfirmTitle": "Apply Template",
@@ -788,7 +790,6 @@
   "supportStatusClosed": "Closed",
   "supportPriority": "Priority",
   "profileLanguage": "App Language",
-  "profileLanguageTurkish": "Turkish",
   "profileLanguageEnglish": "English",
   "profileLanguageSaved": "Language updated.",
   "profileDeleteSectionTitle": "Delete Account",
@@ -808,12 +809,11 @@
   },
   "dashboardNoActivePackage": "You don't have an active package. Please buy a package for SMS operations.",
   "dashboardBuyPackage": "Buy Package",
-
-  "aiProfileBannerBadge": "Bagla AI Assistant",
+  "aiProfileBannerBadge": "Liik AI Assistant",
   "aiProfileBannerTitle": "Create AI Profile",
   "aiProfileBannerDesc": "AI writes the profile that turns your followers into appointments — you just share your expertise.",
   "aiProfileTitle": "AI Profile",
-  "aiProfileAiBadge": "Bagla AI Assistant",
+  "aiProfileAiBadge": "Liik AI Assistant",
   "aiProfileSubtitle": "Build your professional profile in seconds",
   "aiProfileLoading": "Loading AI Profile...",
   "aiProfileRetry": "Try Again",
@@ -830,10 +830,10 @@
   "aiProfileGenerateLocked": "No AI generation credits left",
   "aiProfileGenerateSuccess": "Your profile is ready!",
   "aiProfileGenerateSuccessHint": "You can edit the content below",
-  "aiProfileMsgAnalyzing": "Analysing your profile...",
+  "aiProfileMsgAnalyzing": "Analyzing your profile...",
   "aiProfileMsgPreparing": "Crafting content for your profession...",
   "aiProfileMsgSelecting": "Picking the best expressions...",
-  "aiProfileMsgSeo": "Applying SEO optimisation...",
+  "aiProfileMsgSeo": "Applying SEO optimization...",
   "aiProfileMsgFinalizing": "Adding the finishing touches...",
   "aiProfileMsgWait": "This may take a few seconds",
   "aiProfileFieldProfession": "Profession *",
@@ -849,7 +849,7 @@
   "aiProfileFieldExperienceError": "Must be between 0 and 50",
   "aiProfileFieldTone": "Tone",
   "aiProfileFieldAchievement": "Achievement / Membership",
-  "aiProfileFieldAchievementHint": "Turkish Dietitians Association",
+  "aiProfileFieldAchievementHint": "Professional association",
   "aiProfileFieldNote": "Additional Note",
   "aiProfileFieldNoteHint": "Keep it short and clear",
   "aiProfileFieldBio": "Bio / Description (min 20 chars)",
@@ -874,30 +874,449 @@
   "aiProfileSessionMissing": "Session not found. Please log in again.",
   "aiProfileRemainingCount": "{count} left",
   "@aiProfileRemainingCount": {
-    "placeholders": { "count": {} }
+    "placeholders": {
+      "count": {}
+    }
   },
   "aiProfileFetchError": "Could not load data (HTTP {status}).",
   "@aiProfileFetchError": {
-    "placeholders": { "status": {} }
+    "placeholders": {
+      "status": {}
+    }
   },
   "aiProfileConnectionError": "Connection error: {error}",
   "@aiProfileConnectionError": {
-    "placeholders": { "error": {} }
+    "placeholders": {
+      "error": {}
+    }
   },
   "aiProfileGenerateHttpError": "Generation failed (HTTP {status}).",
   "@aiProfileGenerateHttpError": {
-    "placeholders": { "status": {} }
+    "placeholders": {
+      "status": {}
+    }
   },
   "aiProfileSaveHttpError": "Save failed (HTTP {status}).",
   "@aiProfileSaveHttpError": {
-    "placeholders": { "status": {} }
+    "placeholders": {
+      "status": {}
+    }
   },
   "aiProfileThemeHttpError": "Could not save theme (HTTP {status}).",
   "@aiProfileThemeHttpError": {
-    "placeholders": { "status": {} }
+    "placeholders": {
+      "status": {}
+    }
   },
   "aiProfileLinksHttpError": "Could not save links (HTTP {status}).",
   "@aiProfileLinksHttpError": {
-    "placeholders": { "status": {} }
-  }
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "onboardBadge1": "A SPACE OF YOUR OWN",
+  "onboardBadge2": "SIMPLER SCHEDULING",
+  "onboardBadge3": "READY TO SHARE",
+  "onboardSkip": "Skip",
+  "onboardContinue": "Continue",
+  "onboardStart": "Get started with Liik",
+  "onboardLogin": "Already have an account? Log in",
+  "onboardPreviewName": "Hi, I’m Alex",
+  "onboardPreviewTagline": "Creating. Sharing. Connecting.",
+  "onboardPreviewExplore": "Explore my world",
+  "onboardPreviewBook": "Let’s find a time",
+  "onboardPreviewCall": "Discovery call",
+  "onboardPreviewDuration": "30 min · Online",
+  "onboardPreviewReady": "Your bio link is ready",
+  "onboardPreviewShareHint": "Add it to your profile. Get discovered.",
+  "onboardPreviewConnections": "One link. New connections.",
+  "loginSubtitle": "Sign in to your account and pick up where you left off",
+  "loginOr": "or",
+  "loginNoAccount": "Don’t have an account?",
+  "registerTitle": "Create account",
+  "registerConfirmPassword": "Confirm password",
+  "registerUsername": "Username (optional)",
+  "registerSubmit": "Sign up",
+  "registerError": "An error occurred during registration.",
+  "authTokenMissing": "Could not retrieve the sign-in token.",
+  "authUnauthorized": "Sign-in was not authorized.",
+  "authGoogleCancelled": "Google sign-in was cancelled.",
+  "authGoogleTokenMissing": "Could not retrieve the Google sign-in token.",
+  "verifyEmailPending": "Email not verified yet. Check your inbox.",
+  "authConnectionError": "Could not connect to the server.",
+  "verifyEmailResent": "Verification email sent again.",
+  "commonSendFailed": "Could not send.",
+  "verifyEmailTitle": "Verify your email",
+  "verifyEmailCheck": "I’ve verified my email",
+  "verifyEmailResend": "Resend",
+  "verifyEmailOtherAccount": "Sign in with a different account",
+  "dashboardImageFailed": "Could not create the image.",
+  "commonNoResults": "No results found",
+  "dashboardPackageActivated": "Your package is active! 🎉",
+  "commonError": "Something went wrong.",
+  "dashboardWelcomeGiftTitle": "Claim your welcome gift",
+  "dashboardWelcomeGiftDescription": "Complete the form to activate 100 free SMS for one month.",
+  "commonChoose": "Select...",
+  "dashboardCityRequired": "City *",
+  "dashboardCityHint": "e.g. New York",
+  "dashboardInstagramOptional": "Instagram (optional)",
+  "dashboardActivatePackage": "Activate package",
+  "dashboardWelcomeGiftBadge": "WELCOME GIFT",
+  "dashboardWelcomeGiftOffer": "100 free SMS for one month",
+  "dashboardWelcomeGiftHint": "Your gift is waiting. Complete the form to activate it.",
+  "dashboardReviewTitle": "Enjoying Liik?",
+  "dashboardReviewHint": "Your review helps us grow.",
+  "dashboardReviewAction": "Rate Liik",
+  "commonView": "View",
+  "dashboardTopUp": "Top up",
+  "dashboardFeedbackTitle": "How is your Liik experience?",
+  "dashboardFeedbackHint": "Share your experience to help us improve.",
+  "dashboardFeedbackComment": "Your comment (optional)...",
+  "dashboardFeedbackSubmit": "Submit review",
+  "commonNotNow": "Not now",
+  "ratingVeryBad": "Very bad",
+  "ratingBad": "Bad",
+  "ratingGood": "Good",
+  "ratingExcellent": "Excellent!",
+  "ratingSelect": "Select a rating",
+  "workingTemplateAfternoon": "Afternoon",
+  "workingTemplateEvening": "Evening",
+  "announcementWarning": "Warning",
+  "announcementUpdate": "Update",
+  "announcementConnectionError": "Connection error.",
+  "announcementReadAll": "Mark all as read",
+  "announcementEmpty": "No announcements yet",
+  "announcementDownload": "Download update",
+  "blogTitle": "Articles",
+  "blogViewAll": "View all",
+  "blogLoadFailed": "Could not load articles.",
+  "commonAll": "All",
+  "blogEmptyCategory": "No articles in this category yet",
+  "blogReadMore": "Read more",
+  "aiProfileBioPreview": "Bio page preview",
+  "aiProfileConversionPage": "My booking page",
+  "aiProfileConversionHint": "Turn followers into bookings",
+  "aiProfilePageTitle": "Page title",
+  "aiProfileMetaPlaceholder": "Your meta description appears here. Describe your page for search results.",
+  "aiProfileGooglePreview": "Google search preview",
+  "aiProfileSeoWeak": "Weak",
+  "aiProfileSeoExcellent": "Excellent",
+  "aiProfileThemeAutoSave": "Tap a theme to save it automatically",
+  "aiProfileEditLinks": "Edit my links",
+  "aiProfilePreviewLoading": "Loading preview...",
+  "aiProfilePreviewFailed": "Could not load preview",
+  "professionTrainer": "Personal trainer",
+  "professionBeautician": "Beauty professional",
+  "professionCoach": "Coach & consultant",
+  "aiProfileProfessionTemplate": "Quick start for your profession",
+  "aiProfileReorderLinks": "Drag and drop to reorder active links",
+  "appointmentDateTimeHeading": "DATE & TIME",
+  "authRegisterFailed": "Registration failed (HTTP {status}).",
+  "@authRegisterFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "authLoginFailed": "Sign-in failed (HTTP {status}).",
+  "@authLoginFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "authGoogleFailed": "Google sign-in failed (HTTP {status}).",
+  "@authGoogleFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "authConnectionFailed": "Could not connect to the server: {error}",
+  "@authConnectionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authGoogleError": "Google sign-in failed: {error}",
+  "@authGoogleError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authAppleError": "Apple sign-in failed: {error}",
+  "@authAppleError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyEmailFailed": "Could not check verification (HTTP {status}).",
+  "@verifyEmailFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "verifyEmailDescription": "We sent a verification link to {email}. Open the link, then tap the button below.",
+  "@verifyEmailDescription": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyEmailResendCountdown": "Resend ({seconds}s)",
+  "@verifyEmailResendCountdown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "announcementInfo": "Info",
+  "announcementPromo": "Offer",
+  "announcementFeature": "New feature",
+  "announcementTitle": "Announcement",
+  "announcementsTitle": "Announcements",
+  "ratingAverage": "Average",
+  "workingTemplateStandard": "Standard",
+  "workingTemplateExpert": "Expert",
+  "workingTemplateWeekend": "Weekend",
+  "professionDietitian": "Dietitian",
+  "professionPsychologist": "Psychologist",
+  "professionPhysiotherapist": "Physiotherapist",
+  "aiToneFriendly": "Friendly",
+  "aiToneFriendlyHint": "Warm, natural language",
+  "aiToneProfessional": "Professional",
+  "aiToneProfessionalHint": "Formal and reassuring",
+  "aiToneWarm": "Warm",
+  "aiToneWarmHint": "Empathetic and approachable",
+  "linkLocation": "Location",
+  "linkWebsite": "Website",
+  "previewLoadError": "Could not load preview: {error}",
+  "@previewLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "announcementLoadFailed": "Could not load announcements (HTTP {status}).",
+  "@announcementLoadFailed": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "announcementMinutesAgo": "{count} min ago",
+  "@announcementMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "announcementHoursAgo": "{count} hr ago",
+  "@announcementHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "announcementDaysAgo": "{count} days ago",
+  "@announcementDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardLowSms": "Your SMS balance is low — {count} messages left.",
+  "@dashboardLowSms": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workingTemplateStandardDescription": "Mon–Fri 09:00–12:00 / 13:00–17:00 · 20 min",
+  "workingTemplateAfternoonDescription": "Mon–Fri 13:00–17:00 · 20 min",
+  "workingTemplateExpertDescription": "Mon–Sat 09:00–12:00 / 13:00–17:00 · 20 min",
+  "workingTemplateEveningDescription": "Mon–Sat 17:00–21:00 · 45 min",
+  "workingTemplateWeekendDescription": "Sat–Sun 10:00–17:00 · 30 min",
+  "loginWelcome": "Welcome back.",
+  "loginWelcomeDescription": "Your links, your bookings, your next connection. All in one place.",
+  "loginEmailHint": "you@example.com",
+  "loginPasswordHint": "Enter your password",
+  "loginShowPassword": "Show password",
+  "loginHidePassword": "Hide password",
+  "loginEmailValidation": "Enter a valid email address.",
+  "loginPasswordValidation": "Enter your password.",
+  "loginApple": "Sign in with Apple",
+  "dashboardWelcome": "Your day, connected.",
+  "dashboardBioHint": "One link for your world. Share it wherever people find you.",
+  "dashboardCopyLink": "Copy link",
+  "dashboardBioEmptyTitle": "Your next connection starts here.",
+  "dashboardBioEmptyHint": "Create your Liik page to bring your links and bookings together.",
+  "dashboardScheduleEmptyHint": "A little room in your day. Add an appointment or share your booking page.",
+  "dashboardViewAppointments": "View appointments",
+  "dashboardAnnouncements": "{count} new announcements",
+  "@dashboardAnnouncements": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appointmentsHeading": "A little more organized.",
+  "appointmentsInView": "In this view",
+  "appointmentsPlanRequired": "Your current plan does not include appointment management.",
+  "calendarLoadError": "Could not load this week. Please try again.",
+  "contactsSubtitle": "Your people, all in one place. Keep details and appointments together.",
+  "contactsAll": "All",
+  "contactsCount": "{count, plural, =1{1 contact} other{{count} contacts}}",
+  "contactsNoResults": "No matching contacts. Try another name, phone number or email.",
+  "contactsLoadError": "Could not load contacts. Please try again.",
+  "contactsSaveError": "Could not save this contact. Please try again.",
+  "contactsPhoneInvalid": "Enter a valid phone number with up to 15 digits.",
+  "contactsEmailInvalid": "Enter a valid email address.",
+  "@contactsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "linksSubtitle": "Your links, your way. Bring everything you share onto your Liik page.",
+  "linksFormSubtitle": "Choose a link type, add a destination and make it yours.",
+  "linksOrderHint": "Drag the handle to change the order on your page.",
+  "linksOrderError": "Could not save the order. Your previous order has been restored.",
+  "linksLoadError": "Could not load your links.",
+  "linksRetryHint": "Please check your connection and try again.",
+  "linksSettingsError": "Link types and colors could not be loaded. Please try again.",
+  "linksDeleteTitle": "Delete this link?",
+  "linksDeleteBody": "This link will be removed from your Liik page.",
+  "linksDestinationRequired": "Enter a destination for this link.",
+  "linksTextTooLong": "Use 255 characters or fewer.",
+  "linksMoveUp": "Move up",
+  "linksMoveDown": "Move down",
+  "linksDrag": "Drag to reorder",
+  "linksActions": "Link actions",
+  "themesSubtitle": "Make your Liik page feel like you. Choose a theme and preview your look.",
+  "themesCurrent": "Current theme",
+  "themesUnsaved": "Previewing a new theme · not saved yet",
+  "themesApplied": "Theme applied",
+  "themesRefreshPreview": "Refresh preview",
+  "themesLoadError": "Could not load themes. Please try again.",
+  "themesSaveErrorMessage": "Could not save this theme. Please try again.",
+  "themesViewPreview": "View preview",
+  "profileTimezone": "Local time zone",
+  "profileTimezoneHint": "Your appointments and working hours use this time zone. Daylight saving changes are handled automatically.",
+  "profileTimezoneSearch": "Search city or time zone",
+  "profileTimezoneLoadError": "Could not load time zones. Please try again.",
+  "supportSubtitle": "Need a hand? Talk to us and keep track of your support requests here.",
+  "supportFormHint": "Tell us what happened and how we can help.",
+  "supportActive": "Active",
+  "supportFinished": "Resolved & closed",
+  "supportFilterEmpty": "No requests in this category.",
+  "supportLoadError": "Could not load support requests. Please try again.",
+  "supportSendError": "Could not send your message. Please try again.",
+  "supportCloseError": "Could not close this request. Please try again.",
+  "supportMessageTooShort": "Write at least 5 characters.",
+  "supportReplyTooShort": "Write at least 2 characters.",
+  "supportCloseConfirm": "Close this request? You will no longer be able to reply to it.",
+  "supportInProgress": "In progress",
+  "supportResolved": "Resolved",
+  "supportPriorityLow": "Low priority",
+  "supportPriorityMedium": "Normal priority",
+  "supportPriorityHigh": "High priority",
+  "supportPriorityUrgent": "Urgent",
+  "analyticsTitle": "Analytics",
+  "analyticsIntro": "See how people discover your profile and interact with your links.",
+  "analyticsPeriod": "Reporting period",
+  "@analyticsDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsDays": "{count} days",
+  "analyticsOverview": "Overview",
+  "analyticsLinks": "Link performance",
+  "analyticsAudience": "Audience",
+  "analyticsConversions": "Click-through",
+  "analyticsClicks": "Link clicks",
+  "analyticsVisitors": "Unique visitors",
+  "analyticsUniqueClicks": "Unique clickers",
+  "analyticsRate": "Click-through rate",
+  "analyticsRedirects": "Redirect page views",
+  "analyticsPrevious": "vs. previous period",
+  "analyticsNoPrevious": "No previous baseline",
+  "analyticsUnchanged": "No change",
+  "analyticsTrend": "Daily link clicks",
+  "analyticsTrendHint": "Total clicks and unique clickers for each day.",
+  "analyticsEmpty": "No activity in this period",
+  "analyticsEmptyText": "Visits and link clicks will appear here as people use your profile.",
+  "analyticsTopLinks": "Top links",
+  "analyticsLink": "Link",
+  "analyticsShare": "Share of clicks",
+  "analyticsNoLinks": "No link clicks yet.",
+  "analyticsViews": "Visitors",
+  "analyticsFunnel": "From profile to links",
+  "analyticsFunnelHint": "Unique visitors and unique clickers are counted separately for the selected period.",
+  "analyticsManual": "Manual",
+  "analyticsAutomatic": "Automatic",
+  "analyticsNavigation": "Navigation methods",
+  "analyticsNavigationHint": "How visitors move from redirect pages to destinations.",
+  "analyticsSources": "Traffic sources",
+  "analyticsDevices": "Devices",
+  "analyticsPlatforms": "Platforms",
+  "analyticsBrowsers": "Browsers",
+  "analyticsCountries": "Countries",
+  "analyticsHours": "Clicks by hour",
+  "analyticsWeekdays": "Clicks by weekday",
+  "analyticsUnknown": "Unknown",
+  "analyticsMobile": "Mobile",
+  "analyticsDesktop": "Desktop",
+  "analyticsTablet": "Tablet",
+  "@analyticsTimezone": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "analyticsTimezone": "Report time zone: {timezone}",
+  "analyticsDataNote": "Only recorded activity is included. Unique metrics use anonymous visitor identifiers.",
+  "analyticsRateNote": "Unique clickers divided by unique profile visitors. This measures link engagement.",
+  "analyticsLoadError": "Could not load analytics. Please try again.",
+  "themesFree": "Free",
+  "themesPremium": "Premium",
+  "themesClassic": "Classic",
+  "appointmentShare": "Share appointment",
+  "appointmentCopyLink": "Copy link",
+  "appointmentLinkCopied": "Link copied",
+  "appointmentCode": "Appointment code",
+  "appointmentDetails": "Appointment details",
+  "appointmentNotes": "Notes",
+  "appointmentStatusLabel": "Status",
+  "appointmentOpenCalendar": "View appointment / add to calendar",
+  "appointmentHistory": "Appointment history",
+  "appointmentShareFailed": "Could not share the appointment. Try copying the link.",
+  "appointmentTimezone": "Time zone",
+  "calendarSubtitle": "Plan your week, view appointment details and share bookings.",
+  "profileDesignIntro": "Make your profile yours. Manage your details, visibility and account settings."
 }

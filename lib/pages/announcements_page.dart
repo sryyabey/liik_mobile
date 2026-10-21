@@ -1,3 +1,4 @@
+import 'package:bagla_mobile/l10n/app_localizations.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -17,16 +18,16 @@ class _TypeMeta {
   const _TypeMeta(this.label, this.color, this.icon);
 }
 
-const Map<String, _TypeMeta> _kTypeMeta = {
-  'info':    _TypeMeta('Bilgi',    Color(0xFF3B82F6), Icons.info_outline),
-  'warning': _TypeMeta('Uyarı',   Color(0xFFF59E0B), Icons.warning_amber_outlined),
-  'promo':   _TypeMeta('Kampanya',Color(0xFFEC4899), Icons.local_offer_outlined),
-  'feature': _TypeMeta('Yenilik', Color(0xFF8B5CF6), Icons.auto_awesome_outlined),
-  'update':  _TypeMeta('Güncelleme',Color(0xFF10B981),Icons.system_update_outlined),
+Map<String, _TypeMeta> _typeMeta(BuildContext context) => {
+  'info':    _TypeMeta(AppLocalizations.of(context).announcementInfo,    const Color(0xFF3B82F6), Icons.info_outline),
+  'warning': _TypeMeta(AppLocalizations.of(context).announcementWarning,   const Color(0xFFF59E0B), Icons.warning_amber_outlined),
+  'promo':   _TypeMeta(AppLocalizations.of(context).announcementPromo,const Color(0xFFEC4899), Icons.local_offer_outlined),
+  'feature': _TypeMeta(AppLocalizations.of(context).announcementFeature, const Color(0xFF8B5CF6), Icons.auto_awesome_outlined),
+  'update':  _TypeMeta(AppLocalizations.of(context).announcementUpdate,const Color(0xFF10B981),Icons.system_update_outlined),
 };
 
-_TypeMeta _meta(String? type) =>
-    _kTypeMeta[type] ?? const _TypeMeta('Duyuru', Color(0xFF6B7280), Icons.campaign_outlined);
+_TypeMeta _meta(BuildContext context, String? type) =>
+    _typeMeta(context)[type] ?? _TypeMeta(AppLocalizations.of(context).announcementTitle, const Color(0xFF6B7280), Icons.campaign_outlined);
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 
@@ -99,10 +100,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
               .toList();
         });
       } else {
-        setState(() => _error = 'Yüklenemedi (HTTP ${res.statusCode}).');
+        setState(() => _error = AppLocalizations.of(context).announcementLoadFailed(res.statusCode));
       }
     } catch (e) {
-      setState(() => _error = 'Bağlantı hatası.');
+      setState(() => _error = AppLocalizations.of(context).announcementConnectionError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -134,9 +135,9 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
   String _fmtDate(DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
-    if (diff.inHours < 24)   return '${diff.inHours} saat önce';
-    if (diff.inDays < 7)     return '${diff.inDays} gün önce';
+    if (diff.inMinutes < 60) return AppLocalizations.of(context).announcementMinutesAgo(diff.inMinutes);
+    if (diff.inHours < 24)   return AppLocalizations.of(context).announcementHoursAgo(diff.inHours);
+    if (diff.inDays < 7)     return AppLocalizations.of(context).announcementDaysAgo(diff.inDays);
     return '${dt.day.toString().padLeft(2,'0')}.${dt.month.toString().padLeft(2,'0')}.${dt.year}';
   }
 
@@ -149,8 +150,8 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Duyurular',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+            Text(AppLocalizations.of(context).announcementsTitle,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
             if (unread > 0) ...[
               const SizedBox(width: 8),
               Container(
@@ -179,9 +180,9 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
           if (unread > 0)
             TextButton(
               onPressed: _markAllRead,
-              child: const Text('Tümünü oku',
-                  style: TextStyle(
-                      color: Color(0xFF6366F1), fontWeight: FontWeight.w600)),
+              child: Text(AppLocalizations.of(context).announcementReadAll,
+                  style: const TextStyle(
+                      color: const Color(0xFF6366F1), fontWeight: FontWeight.w600)),
             ),
         ],
       ),
@@ -204,7 +205,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
   }
 
   Widget _buildCard(Announcement item) {
-    final m = _meta(item.type);
+    final m = _meta(context, item.type);
     return GestureDetector(
       onTap: () async {
         await _markRead(item);
@@ -306,15 +307,15 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
   }
 
   Widget _buildEmpty() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.campaign_outlined, size: 52, color: Color(0xFFD1D5DB)),
-          SizedBox(height: 12),
-          Text('Henüz duyuru yok',
+          const Icon(Icons.campaign_outlined, size: 52, color: const Color(0xFFD1D5DB)),
+          const SizedBox(height: 12),
+          Text(AppLocalizations.of(context).announcementEmpty,
               style:
-                  TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
+                  const TextStyle(color: const Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -393,7 +394,7 @@ class _AnnouncementDetailPageState extends State<_AnnouncementDetailPage> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
-    final m    = _meta(item.type);
+    final m    = _meta(context, item.type);
     final isUpdate = item.type == 'update';
     final hasStore = (item.iosUrl?.isNotEmpty ?? false) ||
         (item.androidUrl?.isNotEmpty ?? false);
@@ -483,8 +484,8 @@ class _AnnouncementDetailPageState extends State<_AnnouncementDetailPage> {
                   child: ElevatedButton.icon(
                     onPressed: _launchStore,
                     icon: const Icon(Icons.system_update_outlined, size: 18),
-                    label: const Text('Güncellemeyi İndir',
-                        style: TextStyle(
+                    label: Text(AppLocalizations.of(context).announcementDownload,
+                        style: const TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 15)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),

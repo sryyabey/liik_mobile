@@ -1,0 +1,16 @@
+{
+  "@@locale": "id_ID",
+  "appointmentShare": "Bagikan janji temu",
+  "appointmentCopyLink": "Salin tautan",
+  "appointmentLinkCopied": "Tautan disalin",
+  "appointmentCode": "Kode janji temu",
+  "appointmentDetails": "Detail janji temu",
+  "appointmentNotes": "Catatan",
+  "appointmentStatusLabel": "Status",
+  "appointmentOpenCalendar": "Lihat janji temu / tambahkan ke kalender",
+  "appointmentHistory": "Riwayat janji temu",
+  "appointmentShareFailed": "Tidak dapat membagikan janji temu. Coba salin tautan.",
+  "appointmentTimezone": "Zona waktu",
+  "calendarSubtitle": "Rencanakan minggu Anda, lihat detail dan bagikan janji temu.",
+  "profileDesignIntro": "Sesuaikan profil Anda. Kelola detail, visibilitas, dan pengaturan akun."
+}

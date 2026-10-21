@@ -24,25 +24,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleLogin => 'Continue with Google';
 
   @override
-  String get onboardTitle1 => 'Create your bio link page and stand out';
+  String get onboardTitle1 => 'Your world.\nOne simple link.';
 
   @override
   String get onboardDesc1 =>
-      'Collect all your links on one page, share your bagla.app bio link, and make it easier to get discovered.';
+      'Bring your links, services and everything that makes you, you, together on your Liik page.';
 
   @override
-  String get onboardTitle2 => 'Track your appointments in one place';
+  String get onboardTitle2 => 'Your next booking.\nJust a tap away.';
 
   @override
   String get onboardDesc2 =>
-      'Plan client appointments, send reminders automatically, and run your day with clarity and control.';
+      'Share your availability. Let visitors choose a time that works, while you focus on your day.';
 
   @override
-  String get onboardTitle3 => 'Quick start for independent professionals';
+  String get onboardTitle3 => 'Show up.\nMake connections.';
 
   @override
   String get onboardDesc3 =>
-      'Go live in minutes, unlock more as your business grows, and keep everything in bagla.app.';
+      'Create a page that feels like you, share your bio link and connect with new people.';
 
   @override
   String get menuTitle => 'Menu';
@@ -380,7 +380,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dashboardShareBio => 'Bagla bio link';
+  String get dashboardShareBio => 'Liik bio link';
 
   @override
   String get dashboardWhatsappSupport => 'WhatsApp Support';
@@ -2224,9 +2224,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileLanguage => 'App Language';
 
   @override
-  String get profileLanguageTurkish => 'Turkish';
-
-  @override
   String get profileLanguageEnglish => 'English';
 
   @override
@@ -2273,7 +2270,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardBuyPackage => 'Buy Package';
 
   @override
-  String get aiProfileBannerBadge => 'Bagla AI Assistant';
+  String get aiProfileBannerBadge => 'Liik AI Assistant';
 
   @override
   String get aiProfileBannerTitle => 'Create AI Profile';
@@ -2286,7 +2283,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiProfileTitle => 'AI Profile';
 
   @override
-  String get aiProfileAiBadge => 'Bagla AI Assistant';
+  String get aiProfileAiBadge => 'Liik AI Assistant';
 
   @override
   String get aiProfileSubtitle => 'Build your professional profile in seconds';
@@ -2338,7 +2335,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiProfileGenerateSuccessHint => 'You can edit the content below';
 
   @override
-  String get aiProfileMsgAnalyzing => 'Analysing your profile...';
+  String get aiProfileMsgAnalyzing => 'Analyzing your profile...';
 
   @override
   String get aiProfileMsgPreparing => 'Crafting content for your profession...';
@@ -2347,7 +2344,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiProfileMsgSelecting => 'Picking the best expressions...';
 
   @override
-  String get aiProfileMsgSeo => 'Applying SEO optimisation...';
+  String get aiProfileMsgSeo => 'Applying SEO optimization...';
 
   @override
   String get aiProfileMsgFinalizing => 'Adding the finishing touches...';
@@ -2396,7 +2393,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiProfileFieldAchievement => 'Achievement / Membership';
 
   @override
-  String get aiProfileFieldAchievementHint => 'Turkish Dietitians Association';
+  String get aiProfileFieldAchievementHint => 'Professional association';
 
   @override
   String get aiProfileFieldNote => 'Additional Note';
@@ -2502,4 +2499,1022 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiProfileLinksHttpError(Object status) {
     return 'Could not save links (HTTP $status).';
   }
+
+  @override
+  String get onboardBadge1 => 'A SPACE OF YOUR OWN';
+
+  @override
+  String get onboardBadge2 => 'SIMPLER SCHEDULING';
+
+  @override
+  String get onboardBadge3 => 'READY TO SHARE';
+
+  @override
+  String get onboardSkip => 'Skip';
+
+  @override
+  String get onboardContinue => 'Continue';
+
+  @override
+  String get onboardStart => 'Get started with Liik';
+
+  @override
+  String get onboardLogin => 'Already have an account? Log in';
+
+  @override
+  String get onboardPreviewName => 'Hi, I’m Alex';
+
+  @override
+  String get onboardPreviewTagline => 'Creating. Sharing. Connecting.';
+
+  @override
+  String get onboardPreviewExplore => 'Explore my world';
+
+  @override
+  String get onboardPreviewBook => 'Let’s find a time';
+
+  @override
+  String get onboardPreviewCall => 'Discovery call';
+
+  @override
+  String get onboardPreviewDuration => '30 min · Online';
+
+  @override
+  String get onboardPreviewReady => 'Your bio link is ready';
+
+  @override
+  String get onboardPreviewShareHint =>
+      'Add it to your profile. Get discovered.';
+
+  @override
+  String get onboardPreviewConnections => 'One link. New connections.';
+
+  @override
+  String get loginSubtitle =>
+      'Sign in to your account and pick up where you left off';
+
+  @override
+  String get loginOr => 'or';
+
+  @override
+  String get loginNoAccount => 'Don’t have an account?';
+
+  @override
+  String get registerTitle => 'Create account';
+
+  @override
+  String get registerConfirmPassword => 'Confirm password';
+
+  @override
+  String get registerUsername => 'Username (optional)';
+
+  @override
+  String get registerSubmit => 'Sign up';
+
+  @override
+  String get registerError => 'An error occurred during registration.';
+
+  @override
+  String get authTokenMissing => 'Could not retrieve the sign-in token.';
+
+  @override
+  String get authUnauthorized => 'Sign-in was not authorized.';
+
+  @override
+  String get authGoogleCancelled => 'Google sign-in was cancelled.';
+
+  @override
+  String get authGoogleTokenMissing =>
+      'Could not retrieve the Google sign-in token.';
+
+  @override
+  String get verifyEmailPending => 'Email not verified yet. Check your inbox.';
+
+  @override
+  String get authConnectionError => 'Could not connect to the server.';
+
+  @override
+  String get verifyEmailResent => 'Verification email sent again.';
+
+  @override
+  String get commonSendFailed => 'Could not send.';
+
+  @override
+  String get verifyEmailTitle => 'Verify your email';
+
+  @override
+  String get verifyEmailCheck => 'I’ve verified my email';
+
+  @override
+  String get verifyEmailResend => 'Resend';
+
+  @override
+  String get verifyEmailOtherAccount => 'Sign in with a different account';
+
+  @override
+  String get dashboardImageFailed => 'Could not create the image.';
+
+  @override
+  String get commonNoResults => 'No results found';
+
+  @override
+  String get dashboardPackageActivated => 'Your package is active! 🎉';
+
+  @override
+  String get commonError => 'Something went wrong.';
+
+  @override
+  String get dashboardWelcomeGiftTitle => 'Claim your welcome gift';
+
+  @override
+  String get dashboardWelcomeGiftDescription =>
+      'Complete the form to activate 100 free SMS for one month.';
+
+  @override
+  String get commonChoose => 'Select...';
+
+  @override
+  String get dashboardCityRequired => 'City *';
+
+  @override
+  String get dashboardCityHint => 'e.g. New York';
+
+  @override
+  String get dashboardInstagramOptional => 'Instagram (optional)';
+
+  @override
+  String get dashboardActivatePackage => 'Activate package';
+
+  @override
+  String get dashboardWelcomeGiftBadge => 'WELCOME GIFT';
+
+  @override
+  String get dashboardWelcomeGiftOffer => '100 free SMS for one month';
+
+  @override
+  String get dashboardWelcomeGiftHint =>
+      'Your gift is waiting. Complete the form to activate it.';
+
+  @override
+  String get dashboardReviewTitle => 'Enjoying Liik?';
+
+  @override
+  String get dashboardReviewHint => 'Your review helps us grow.';
+
+  @override
+  String get dashboardReviewAction => 'Rate Liik';
+
+  @override
+  String get commonView => 'View';
+
+  @override
+  String get dashboardTopUp => 'Top up';
+
+  @override
+  String get dashboardFeedbackTitle => 'How is your Liik experience?';
+
+  @override
+  String get dashboardFeedbackHint =>
+      'Share your experience to help us improve.';
+
+  @override
+  String get dashboardFeedbackComment => 'Your comment (optional)...';
+
+  @override
+  String get dashboardFeedbackSubmit => 'Submit review';
+
+  @override
+  String get commonNotNow => 'Not now';
+
+  @override
+  String get ratingVeryBad => 'Very bad';
+
+  @override
+  String get ratingBad => 'Bad';
+
+  @override
+  String get ratingGood => 'Good';
+
+  @override
+  String get ratingExcellent => 'Excellent!';
+
+  @override
+  String get ratingSelect => 'Select a rating';
+
+  @override
+  String get workingTemplateAfternoon => 'Afternoon';
+
+  @override
+  String get workingTemplateEvening => 'Evening';
+
+  @override
+  String get announcementWarning => 'Warning';
+
+  @override
+  String get announcementUpdate => 'Update';
+
+  @override
+  String get announcementConnectionError => 'Connection error.';
+
+  @override
+  String get announcementReadAll => 'Mark all as read';
+
+  @override
+  String get announcementEmpty => 'No announcements yet';
+
+  @override
+  String get announcementDownload => 'Download update';
+
+  @override
+  String get blogTitle => 'Articles';
+
+  @override
+  String get blogViewAll => 'View all';
+
+  @override
+  String get blogLoadFailed => 'Could not load articles.';
+
+  @override
+  String get commonAll => 'All';
+
+  @override
+  String get blogEmptyCategory => 'No articles in this category yet';
+
+  @override
+  String get blogReadMore => 'Read more';
+
+  @override
+  String get aiProfileBioPreview => 'Bio page preview';
+
+  @override
+  String get aiProfileConversionPage => 'My booking page';
+
+  @override
+  String get aiProfileConversionHint => 'Turn followers into bookings';
+
+  @override
+  String get aiProfilePageTitle => 'Page title';
+
+  @override
+  String get aiProfileMetaPlaceholder =>
+      'Your meta description appears here. Describe your page for search results.';
+
+  @override
+  String get aiProfileGooglePreview => 'Google search preview';
+
+  @override
+  String get aiProfileSeoWeak => 'Weak';
+
+  @override
+  String get aiProfileSeoExcellent => 'Excellent';
+
+  @override
+  String get aiProfileThemeAutoSave => 'Tap a theme to save it automatically';
+
+  @override
+  String get aiProfileEditLinks => 'Edit my links';
+
+  @override
+  String get aiProfilePreviewLoading => 'Loading preview...';
+
+  @override
+  String get aiProfilePreviewFailed => 'Could not load preview';
+
+  @override
+  String get professionTrainer => 'Personal trainer';
+
+  @override
+  String get professionBeautician => 'Beauty professional';
+
+  @override
+  String get professionCoach => 'Coach & consultant';
+
+  @override
+  String get aiProfileProfessionTemplate => 'Quick start for your profession';
+
+  @override
+  String get aiProfileReorderLinks => 'Drag and drop to reorder active links';
+
+  @override
+  String get appointmentDateTimeHeading => 'DATE & TIME';
+
+  @override
+  String authRegisterFailed(int status) {
+    return 'Registration failed (HTTP $status).';
+  }
+
+  @override
+  String authLoginFailed(int status) {
+    return 'Sign-in failed (HTTP $status).';
+  }
+
+  @override
+  String authGoogleFailed(int status) {
+    return 'Google sign-in failed (HTTP $status).';
+  }
+
+  @override
+  String authConnectionFailed(String error) {
+    return 'Could not connect to the server: $error';
+  }
+
+  @override
+  String authGoogleError(String error) {
+    return 'Google sign-in failed: $error';
+  }
+
+  @override
+  String authAppleError(String error) {
+    return 'Apple sign-in failed: $error';
+  }
+
+  @override
+  String verifyEmailFailed(int status) {
+    return 'Could not check verification (HTTP $status).';
+  }
+
+  @override
+  String verifyEmailDescription(String email) {
+    return 'We sent a verification link to $email. Open the link, then tap the button below.';
+  }
+
+  @override
+  String verifyEmailResendCountdown(int seconds) {
+    return 'Resend (${seconds}s)';
+  }
+
+  @override
+  String get announcementInfo => 'Info';
+
+  @override
+  String get announcementPromo => 'Offer';
+
+  @override
+  String get announcementFeature => 'New feature';
+
+  @override
+  String get announcementTitle => 'Announcement';
+
+  @override
+  String get announcementsTitle => 'Announcements';
+
+  @override
+  String get ratingAverage => 'Average';
+
+  @override
+  String get workingTemplateStandard => 'Standard';
+
+  @override
+  String get workingTemplateExpert => 'Expert';
+
+  @override
+  String get workingTemplateWeekend => 'Weekend';
+
+  @override
+  String get professionDietitian => 'Dietitian';
+
+  @override
+  String get professionPsychologist => 'Psychologist';
+
+  @override
+  String get professionPhysiotherapist => 'Physiotherapist';
+
+  @override
+  String get aiToneFriendly => 'Friendly';
+
+  @override
+  String get aiToneFriendlyHint => 'Warm, natural language';
+
+  @override
+  String get aiToneProfessional => 'Professional';
+
+  @override
+  String get aiToneProfessionalHint => 'Formal and reassuring';
+
+  @override
+  String get aiToneWarm => 'Warm';
+
+  @override
+  String get aiToneWarmHint => 'Empathetic and approachable';
+
+  @override
+  String get linkLocation => 'Location';
+
+  @override
+  String get linkWebsite => 'Website';
+
+  @override
+  String previewLoadError(String error) {
+    return 'Could not load preview: $error';
+  }
+
+  @override
+  String announcementLoadFailed(int status) {
+    return 'Could not load announcements (HTTP $status).';
+  }
+
+  @override
+  String announcementMinutesAgo(int count) {
+    return '$count min ago';
+  }
+
+  @override
+  String announcementHoursAgo(int count) {
+    return '$count hr ago';
+  }
+
+  @override
+  String announcementDaysAgo(int count) {
+    return '$count days ago';
+  }
+
+  @override
+  String dashboardLowSms(int count) {
+    return 'Your SMS balance is low — $count messages left.';
+  }
+
+  @override
+  String get workingTemplateStandardDescription =>
+      'Mon–Fri 09:00–12:00 / 13:00–17:00 · 20 min';
+
+  @override
+  String get workingTemplateAfternoonDescription =>
+      'Mon–Fri 13:00–17:00 · 20 min';
+
+  @override
+  String get workingTemplateExpertDescription =>
+      'Mon–Sat 09:00–12:00 / 13:00–17:00 · 20 min';
+
+  @override
+  String get workingTemplateEveningDescription =>
+      'Mon–Sat 17:00–21:00 · 45 min';
+
+  @override
+  String get workingTemplateWeekendDescription =>
+      'Sat–Sun 10:00–17:00 · 30 min';
+
+  @override
+  String get loginWelcome => 'Welcome back.';
+
+  @override
+  String get loginWelcomeDescription =>
+      'Your links, your bookings, your next connection. All in one place.';
+
+  @override
+  String get loginEmailHint => 'you@example.com';
+
+  @override
+  String get loginPasswordHint => 'Enter your password';
+
+  @override
+  String get loginShowPassword => 'Show password';
+
+  @override
+  String get loginHidePassword => 'Hide password';
+
+  @override
+  String get loginEmailValidation => 'Enter a valid email address.';
+
+  @override
+  String get loginPasswordValidation => 'Enter your password.';
+
+  @override
+  String get loginApple => 'Sign in with Apple';
+
+  @override
+  String get dashboardWelcome => 'Your day, connected.';
+
+  @override
+  String get dashboardBioHint =>
+      'One link for your world. Share it wherever people find you.';
+
+  @override
+  String get dashboardCopyLink => 'Copy link';
+
+  @override
+  String get dashboardBioEmptyTitle => 'Your next connection starts here.';
+
+  @override
+  String get dashboardBioEmptyHint =>
+      'Create your Liik page to bring your links and bookings together.';
+
+  @override
+  String get dashboardScheduleEmptyHint =>
+      'A little room in your day. Add an appointment or share your booking page.';
+
+  @override
+  String get dashboardViewAppointments => 'View appointments';
+
+  @override
+  String dashboardAnnouncements(int count) {
+    return '$count new announcements';
+  }
+
+  @override
+  String get appointmentsHeading => 'A little more organized.';
+
+  @override
+  String get appointmentsInView => 'In this view';
+
+  @override
+  String get appointmentsPlanRequired =>
+      'Your current plan does not include appointment management.';
+
+  @override
+  String get calendarLoadError => 'Could not load this week. Please try again.';
+
+  @override
+  String get contactsSubtitle =>
+      'Your people, all in one place. Keep details and appointments together.';
+
+  @override
+  String get contactsAll => 'All';
+
+  @override
+  String contactsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contacts',
+      one: '1 contact',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contactsNoResults =>
+      'No matching contacts. Try another name, phone number or email.';
+
+  @override
+  String get contactsLoadError => 'Could not load contacts. Please try again.';
+
+  @override
+  String get contactsSaveError =>
+      'Could not save this contact. Please try again.';
+
+  @override
+  String get contactsPhoneInvalid =>
+      'Enter a valid phone number with up to 15 digits.';
+
+  @override
+  String get contactsEmailInvalid => 'Enter a valid email address.';
+
+  @override
+  String get linksSubtitle =>
+      'Your links, your way. Bring everything you share onto your Liik page.';
+
+  @override
+  String get linksFormSubtitle =>
+      'Choose a link type, add a destination and make it yours.';
+
+  @override
+  String get linksOrderHint =>
+      'Drag the handle to change the order on your page.';
+
+  @override
+  String get linksOrderError =>
+      'Could not save the order. Your previous order has been restored.';
+
+  @override
+  String get linksLoadError => 'Could not load your links.';
+
+  @override
+  String get linksRetryHint => 'Please check your connection and try again.';
+
+  @override
+  String get linksSettingsError =>
+      'Link types and colors could not be loaded. Please try again.';
+
+  @override
+  String get linksDeleteTitle => 'Delete this link?';
+
+  @override
+  String get linksDeleteBody =>
+      'This link will be removed from your Liik page.';
+
+  @override
+  String get linksDestinationRequired => 'Enter a destination for this link.';
+
+  @override
+  String get linksTextTooLong => 'Use 255 characters or fewer.';
+
+  @override
+  String get linksMoveUp => 'Move up';
+
+  @override
+  String get linksMoveDown => 'Move down';
+
+  @override
+  String get linksDrag => 'Drag to reorder';
+
+  @override
+  String get linksActions => 'Link actions';
+
+  @override
+  String get themesSubtitle =>
+      'Make your Liik page feel like you. Choose a theme and preview your look.';
+
+  @override
+  String get themesCurrent => 'Current theme';
+
+  @override
+  String get themesUnsaved => 'Previewing a new theme · not saved yet';
+
+  @override
+  String get themesApplied => 'Theme applied';
+
+  @override
+  String get themesRefreshPreview => 'Refresh preview';
+
+  @override
+  String get themesLoadError => 'Could not load themes. Please try again.';
+
+  @override
+  String get themesSaveErrorMessage =>
+      'Could not save this theme. Please try again.';
+
+  @override
+  String get themesViewPreview => 'View preview';
+
+  @override
+  String get profileTimezone => 'Local time zone';
+
+  @override
+  String get profileTimezoneHint =>
+      'Your appointments and working hours use this time zone. Daylight saving changes are handled automatically.';
+
+  @override
+  String get profileTimezoneSearch => 'Search city or time zone';
+
+  @override
+  String get profileTimezoneLoadError =>
+      'Could not load time zones. Please try again.';
+
+  @override
+  String get supportSubtitle =>
+      'Need a hand? Talk to us and keep track of your support requests here.';
+
+  @override
+  String get supportFormHint => 'Tell us what happened and how we can help.';
+
+  @override
+  String get supportActive => 'Active';
+
+  @override
+  String get supportFinished => 'Resolved & closed';
+
+  @override
+  String get supportFilterEmpty => 'No requests in this category.';
+
+  @override
+  String get supportLoadError =>
+      'Could not load support requests. Please try again.';
+
+  @override
+  String get supportSendError =>
+      'Could not send your message. Please try again.';
+
+  @override
+  String get supportCloseError =>
+      'Could not close this request. Please try again.';
+
+  @override
+  String get supportMessageTooShort => 'Write at least 5 characters.';
+
+  @override
+  String get supportReplyTooShort => 'Write at least 2 characters.';
+
+  @override
+  String get supportCloseConfirm =>
+      'Close this request? You will no longer be able to reply to it.';
+
+  @override
+  String get supportInProgress => 'In progress';
+
+  @override
+  String get supportResolved => 'Resolved';
+
+  @override
+  String get supportPriorityLow => 'Low priority';
+
+  @override
+  String get supportPriorityMedium => 'Normal priority';
+
+  @override
+  String get supportPriorityHigh => 'High priority';
+
+  @override
+  String get supportPriorityUrgent => 'Urgent';
+
+  @override
+  String get analyticsTitle => 'Analytics';
+
+  @override
+  String get analyticsIntro =>
+      'See how people discover your profile and interact with your links.';
+
+  @override
+  String get analyticsPeriod => 'Reporting period';
+
+  @override
+  String analyticsDays(int count) {
+    return '$count days';
+  }
+
+  @override
+  String get analyticsOverview => 'Overview';
+
+  @override
+  String get analyticsLinks => 'Link performance';
+
+  @override
+  String get analyticsAudience => 'Audience';
+
+  @override
+  String get analyticsConversions => 'Click-through';
+
+  @override
+  String get analyticsClicks => 'Link clicks';
+
+  @override
+  String get analyticsVisitors => 'Unique visitors';
+
+  @override
+  String get analyticsUniqueClicks => 'Unique clickers';
+
+  @override
+  String get analyticsRate => 'Click-through rate';
+
+  @override
+  String get analyticsRedirects => 'Redirect page views';
+
+  @override
+  String get analyticsPrevious => 'vs. previous period';
+
+  @override
+  String get analyticsNoPrevious => 'No previous baseline';
+
+  @override
+  String get analyticsUnchanged => 'No change';
+
+  @override
+  String get analyticsTrend => 'Daily link clicks';
+
+  @override
+  String get analyticsTrendHint =>
+      'Total clicks and unique clickers for each day.';
+
+  @override
+  String get analyticsEmpty => 'No activity in this period';
+
+  @override
+  String get analyticsEmptyText =>
+      'Visits and link clicks will appear here as people use your profile.';
+
+  @override
+  String get analyticsTopLinks => 'Top links';
+
+  @override
+  String get analyticsLink => 'Link';
+
+  @override
+  String get analyticsShare => 'Share of clicks';
+
+  @override
+  String get analyticsNoLinks => 'No link clicks yet.';
+
+  @override
+  String get analyticsViews => 'Visitors';
+
+  @override
+  String get analyticsFunnel => 'From profile to links';
+
+  @override
+  String get analyticsFunnelHint =>
+      'Unique visitors and unique clickers are counted separately for the selected period.';
+
+  @override
+  String get analyticsManual => 'Manual';
+
+  @override
+  String get analyticsAutomatic => 'Automatic';
+
+  @override
+  String get analyticsNavigation => 'Navigation methods';
+
+  @override
+  String get analyticsNavigationHint =>
+      'How visitors move from redirect pages to destinations.';
+
+  @override
+  String get analyticsSources => 'Traffic sources';
+
+  @override
+  String get analyticsDevices => 'Devices';
+
+  @override
+  String get analyticsPlatforms => 'Platforms';
+
+  @override
+  String get analyticsBrowsers => 'Browsers';
+
+  @override
+  String get analyticsCountries => 'Countries';
+
+  @override
+  String get analyticsHours => 'Clicks by hour';
+
+  @override
+  String get analyticsWeekdays => 'Clicks by weekday';
+
+  @override
+  String get analyticsUnknown => 'Unknown';
+
+  @override
+  String get analyticsMobile => 'Mobile';
+
+  @override
+  String get analyticsDesktop => 'Desktop';
+
+  @override
+  String get analyticsTablet => 'Tablet';
+
+  @override
+  String analyticsTimezone(String timezone) {
+    return 'Report time zone: $timezone';
+  }
+
+  @override
+  String get analyticsDataNote =>
+      'Only recorded activity is included. Unique metrics use anonymous visitor identifiers.';
+
+  @override
+  String get analyticsRateNote =>
+      'Unique clickers divided by unique profile visitors. This measures link engagement.';
+
+  @override
+  String get analyticsLoadError =>
+      'Could not load analytics. Please try again.';
+
+  @override
+  String get themesFree => 'Free';
+
+  @override
+  String get themesPremium => 'Premium';
+
+  @override
+  String get themesClassic => 'Classic';
+
+  @override
+  String get appointmentShare => 'Share appointment';
+
+  @override
+  String get appointmentCopyLink => 'Copy link';
+
+  @override
+  String get appointmentLinkCopied => 'Link copied';
+
+  @override
+  String get appointmentCode => 'Appointment code';
+
+  @override
+  String get appointmentDetails => 'Appointment details';
+
+  @override
+  String get appointmentNotes => 'Notes';
+
+  @override
+  String get appointmentStatusLabel => 'Status';
+
+  @override
+  String get appointmentOpenCalendar => 'View appointment / add to calendar';
+
+  @override
+  String get appointmentHistory => 'Appointment history';
+
+  @override
+  String get appointmentShareFailed =>
+      'Could not share the appointment. Try copying the link.';
+
+  @override
+  String get appointmentTimezone => 'Time zone';
+
+  @override
+  String get calendarSubtitle =>
+      'Plan your week, view appointment details and share bookings.';
+
+  @override
+  String get profileDesignIntro =>
+      'Make your profile yours. Manage your details, visibility and account settings.';
+}
+
+/// The translations for English, as used in the United Kingdom (`en_GB`).
+class AppLocalizationsEnGb extends AppLocalizationsEn {
+  AppLocalizationsEnGb() : super('en_GB');
+
+  @override
+  String get myLinksColorLabel => 'Colour';
+
+  @override
+  String myLinksColorFallback(Object id) {
+    return 'Colour #$id';
+  }
+
+  @override
+  String get myLinksDebugNoColors => '⚠️ Colour list returned empty.';
+
+  @override
+  String get aiProfileMsgAnalyzing => 'Analysing your profile...';
+
+  @override
+  String get aiProfileMsgSeo => 'Applying SEO optimisation...';
+
+  @override
+  String get appointmentShare => 'Share appointment';
+
+  @override
+  String get appointmentCopyLink => 'Copy link';
+
+  @override
+  String get appointmentLinkCopied => 'Link copied';
+
+  @override
+  String get appointmentCode => 'Appointment code';
+
+  @override
+  String get appointmentDetails => 'Appointment details';
+
+  @override
+  String get appointmentNotes => 'Notes';
+
+  @override
+  String get appointmentStatusLabel => 'Status';
+
+  @override
+  String get appointmentOpenCalendar => 'View appointment / add to calendar';
+
+  @override
+  String get appointmentHistory => 'Appointment history';
+
+  @override
+  String get appointmentShareFailed =>
+      'Could not share the appointment. Try copying the link.';
+
+  @override
+  String get appointmentTimezone => 'Time zone';
+
+  @override
+  String get calendarSubtitle =>
+      'Plan your week, view appointment details and share bookings.';
+
+  @override
+  String get profileDesignIntro =>
+      'Make your profile yours. Manage your details, visibility and account settings.';
+}
+
+/// The translations for English, as used in the United States (`en_US`).
+class AppLocalizationsEnUs extends AppLocalizationsEn {
+  AppLocalizationsEnUs() : super('en_US');
+
+  @override
+  String get appointmentShare => 'Share appointment';
+
+  @override
+  String get appointmentCopyLink => 'Copy link';
+
+  @override
+  String get appointmentLinkCopied => 'Link copied';
+
+  @override
+  String get appointmentCode => 'Appointment code';
+
+  @override
+  String get appointmentDetails => 'Appointment details';
+
+  @override
+  String get appointmentNotes => 'Notes';
+
+  @override
+  String get appointmentStatusLabel => 'Status';
+
+  @override
+  String get appointmentOpenCalendar => 'View appointment / add to calendar';
+
+  @override
+  String get appointmentHistory => 'Appointment history';
+
+  @override
+  String get appointmentShareFailed =>
+      'Could not share the appointment. Try copying the link.';
+
+  @override
+  String get appointmentTimezone => 'Time zone';
+
+  @override
+  String get calendarSubtitle =>
+      'Plan your week, view appointment details and share bookings.';
+
+  @override
+  String get profileDesignIntro =>
+      'Make your profile yours. Manage your details, visibility and account settings.';
 }

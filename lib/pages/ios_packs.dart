@@ -298,7 +298,7 @@ class _IosPacksPageState extends State<IosPacksPage>
     if (contract is Map<String, dynamic>) {
       final title = contract['title'];
       if (title is Map) {
-        contractTitle = title['tr']?.toString();
+        contractTitle = (title[Localizations.localeOf(context).toLanguageTag()] ?? title[Localizations.localeOf(context).languageCode] ?? title['en'])?.toString();
         contractTitle ??= title.values
             .firstWhere(
               (e) => e != null && e.toString().isNotEmpty,
@@ -311,7 +311,7 @@ class _IosPacksPageState extends State<IosPacksPage>
 
       final desc = contract['description'];
       if (desc is Map) {
-        contractDesc = desc['tr']?.toString();
+        contractDesc = (desc[Localizations.localeOf(context).toLanguageTag()] ?? desc[Localizations.localeOf(context).languageCode] ?? desc['en'])?.toString();
         contractDesc ??= desc.values
             .firstWhere(
               (e) => e != null && e.toString().isNotEmpty,
