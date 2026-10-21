@@ -1,3 +1,4 @@
+import 'package:bagla_mobile/l10n/app_localizations.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  AppLocalizations get loc => AppLocalizations.of(context);
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -112,7 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
       }
       if (messages.isNotEmpty) return messages.join('\n');
     }
-    return 'Kayıt sırasında hata oluştu.';
+    return loc.registerError;
   }
 
   Future<void> _register() async {
@@ -156,7 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
         if (token != null) {
           await _handleEmailRegisterSuccess(token.toString(), email);
         } else {
-          _showError('Token alınamadı.');
+          _showError(loc.authTokenMissing);
         }
       } else if (response.statusCode == 422) {
         final decoded = jsonDecode(response.body);
@@ -164,10 +166,10 @@ class _RegisterPageState extends State<RegisterPage> {
         final errors = decoded['errors'];
         _showError(message ?? _formatValidationErrors(errors));
       } else {
-        _showError('Kayıt başarısız (HTTP ${response.statusCode}).');
+        _showError(loc.authRegisterFailed(response.statusCode));
       }
     } catch (e) {
-      _showError('Sunucuya bağlanılamadı: $e');
+      _showError(loc.authConnectionFailed(e.toString()));
     } finally {
       if (mounted) {
         setState(() {
@@ -186,13 +188,13 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       final account = await _googleSignIn.signIn();
       if (account == null) {
-        _showError('Google giriş iptal edildi.');
+        _showError(loc.authGoogleCancelled);
         return;
       }
       final auth = await account.authentication;
       final idToken = auth.idToken;
       if (idToken == null) {
-        _showError('Google idToken alınamadı.');
+        _showError(loc.authGoogleTokenMissing);
         return;
       }
 
@@ -216,17 +218,17 @@ class _RegisterPageState extends State<RegisterPage> {
         if (token != null) {
           await _handleSocialRegisterSuccess(token.toString());
         } else {
-          _showError('Token alınamadı.');
+          _showError(loc.authTokenMissing);
         }
       } else {
         final decoded = jsonDecode(response.body);
         final message = decoded is Map ? decoded['message']?.toString() : null;
         _showError(
-          message ?? 'Google giriş başarısız (HTTP ${response.statusCode}).',
+          message ?? loc.authGoogleFailed(response.statusCode),
         );
       }
     } catch (e) {
-      _showError('Google girişi başarısız: $e');
+      _showError(loc.authGoogleError(e.toString()));
     } finally {
       if (mounted) {
         setState(() {
@@ -248,7 +250,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } on AppleAuthException catch (e) {
       _showError(e.message);
     } catch (e) {
-      _showError('Apple girişi başarısız: $e');
+      _showError(loc.authAppleError(e.toString()));
     } finally {
       if (mounted) {
         setState(() {
@@ -269,9 +271,9 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Hesap Oluştur',
-                  style: TextStyle(
+                Text(
+                  loc.registerTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -282,7 +284,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _nameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Ad Soyad',
+                    labelText: loc.customersName,
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.2),
@@ -299,7 +301,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'E-posta',
+                    labelText: loc.emailLabel,
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.2),
@@ -316,7 +318,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscureText: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Şifre',
+                    labelText: loc.passwordLabel,
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.2),
@@ -333,7 +335,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscureText: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Şifre (Tekrar)',
+                    labelText: loc.registerConfirmPassword,
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.2),
@@ -350,7 +352,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   controller: _usernameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Kullanıcı Adı (opsiyonel)',
+                    labelText: loc.registerUsername,
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.2),
@@ -390,9 +392,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2.5),
                           )
-                        : const Text(
-                            'Kayıt Ol',
-                            style: TextStyle(
+                        : Text(
+                            loc.registerSubmit,
+                            style: const TextStyle(
                               color: Color(0xFF2575FC),
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -421,8 +423,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                     label: Text(
                       _isGoogleLoading
-                          ? 'Bağlanıyor...'
-                          : 'Google ile devam et',
+                          ? loc.googleConnecting
+                          : loc.googleLogin,
                       style: const TextStyle(color: Colors.black87),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -452,9 +454,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Zaten hesabın var mı? Giriş yap',
-                    style: TextStyle(color: Colors.white70),
+                  child: Text(
+                    loc.onboardLogin,
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ),
               ],

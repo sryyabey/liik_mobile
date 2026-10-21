@@ -22,14 +22,14 @@ class AppleAuthException implements Exception {
 
   factory AppleAuthException.canceled() {
     return const AppleAuthException(
-      'Apple giriş iptal edildi.',
+      'Apple sign-in was cancelled.',
       AppleAuthErrorType.canceled,
     );
   }
 
   factory AppleAuthException.identityTokenMissing() {
     return const AppleAuthException(
-      'Apple idToken alınamadı.',
+      'Could not retrieve the Apple sign-in token.',
       AppleAuthErrorType.identityTokenMissing,
     );
   }
@@ -104,7 +104,7 @@ class AppleAuthService {
             data['access_token'] ??
             (data['data'] != null ? data['data']['token'] : null);
         if (token == null) {
-          throw AppleAuthException.server('Token alınamadı.');
+          throw AppleAuthException.server('Could not retrieve the sign-in token.');
         }
         final user = data['user'] ??
             (data['data'] != null ? data['data']['user'] : null);
@@ -126,19 +126,19 @@ class AppleAuthService {
 
       final message = _extractMessage(response.body);
       throw AppleAuthException.server(
-        message ?? 'Apple giriş başarısız (HTTP ${response.statusCode}).',
+        message ?? 'Apple sign-in failed (HTTP ${response.statusCode}).',
       );
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         throw AppleAuthException.canceled();
       }
       throw AppleAuthException.server(
-        'Apple girişi başarısız: ${e.message}',
+        'Apple sign-in failed: ${e.message}',
       );
     } on AppleAuthException {
       rethrow;
     } catch (e) {
-      throw AppleAuthException.unknown('Apple girişi başarısız: $e');
+      throw AppleAuthException.unknown('Apple sign-in failed: $e');
     }
   }
 
@@ -191,6 +191,6 @@ class AppleAuthService {
       }
       if (messages.isNotEmpty) return messages.join('\n');
     }
-    return 'Apple girişi sırasında hata oluştu.';
+    return 'An error occurred during Apple sign-in.';
   }
 }

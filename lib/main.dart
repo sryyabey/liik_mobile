@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added import for SharedPreferences
 import 'auth.dart';
+import 'user_timezone.dart';
+import 'app_locale.dart';
 import 'login_page.dart';
 import 'package:bagla_mobile/l10n/app_localizations.dart';
 import 'main_tabs_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await UserTimeZone.load();
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   runApp(const ProviderScope(child: BaglaApp()));
 }
 
@@ -32,13 +38,12 @@ class BaglaAppState extends State<BaglaApp> {
   Future<void> _initLocale() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString('preferred_locale');
-    if (saved != null && saved.isNotEmpty) {
-      setState(() {
-        _locale = Locale(saved);
-      });
-    } else {
-      _locale = WidgetsBinding.instance.platformDispatcher.locale;
-    }
+    final locale = saved != null && saved.isNotEmpty
+        ? parseLiikLocale(saved)
+        : resolveLiikLocale(WidgetsBinding.instance.platformDispatcher.locale);
+    if (!mounted) return;
+    setState(() => _locale = locale);
+    await prefs.setString('preferred_locale', locale.toLanguageTag());
   }
 
   void _checkLoginStatus() async {
@@ -51,20 +56,20 @@ class BaglaAppState extends State<BaglaApp> {
   }
 
   void setLocale(Locale locale) async {
-    setState(() {
-      _locale = locale;
-    });
+    final supported = resolveLiikLocale(locale);
+    setState(() => _locale = supported);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('preferred_locale', locale.languageCode);
+    await prefs.setString('preferred_locale', supported.toLanguageTag());
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bagla.app',
+      title: 'Liik',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0866EB)),
+        scaffoldBackgroundColor: const Color(0xFFF0F5FF),
       ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -72,8 +77,8 @@ class BaglaAppState extends State<BaglaApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: _locale ?? const Locale('tr'),
+      supportedLocales: liikLocales,
+      locale: _locale ?? defaultLiikLocale,
       home: _isLoggedIn
           ? const MainTabsPage()
           : SplashScreen(onLocaleChange: setLocale),
@@ -81,59 +86,49 @@ class BaglaAppState extends State<BaglaApp> {
   }
 }
 
-// --- SplashScreen Widget ---
-class SplashScreen extends StatelessWidget {
+// Liik welcome flow.
+class SplashScreen extends StatefulWidget {
   final void Function(Locale) onLocaleChange;
   const SplashScreen({super.key, required this.onLocaleChange});
 
   @override
-  Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              OnboardingScreen(onLocaleChange: onLocaleChange),
-        ),
-      );
-    });
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  'assets/mobile_logo.png',
-                  height: 86,
-                  width: 86,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            const Text(
-              'Bagla.app',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-// --- OnboardingScreen Widget ---
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                OnboardingScreen(onLocaleChange: widget.onLocaleChange),
+          ));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+            child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Image.asset('assets/liik-logo-2.png',
+                  semanticLabel: 'Liik — Link, Identity, Interaction, Key')),
+        )),
+      );
+}
+
+const _ink = Color(0xFF0C2032);
+const _blue = Color(0xFF0866EB);
+const _teal = Color(0xFF00BFAE);
+const _coral = Color(0xFFFF6055);
+
 class OnboardingScreen extends StatefulWidget {
   final void Function(Locale) onLocaleChange;
   const OnboardingScreen({super.key, required this.onLocaleChange});
@@ -143,398 +138,334 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+  final _controller = PageController();
+  int _current = 0;
 
-  void _goToLogin() {
-    Navigator.pushReplacement(
+  void _goToLogin() => Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => LoginPage(onLocaleChange: widget.onLocaleChange),
-      ),
-    );
-  }
+        builder: (_) => LoginPage(onLocaleChange: widget.onLocaleChange),
+      ));
 
-  void _switchLocale(BuildContext context) {
-    final current = Localizations.localeOf(context).languageCode;
-    final next = current == 'tr' ? const Locale('en') : const Locale('tr');
-    widget.onLocaleChange(next);
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isTr = Localizations.localeOf(context).languageCode == 'tr';
-    final skipLabel = isTr ? 'Atla' : 'Skip';
-    final nextLabel = isTr ? 'İleri' : 'Next';
-    final startLabel = isTr ? 'Başlayalım' : "Let's start";
-
-    final pages = <_OnboardPage>[
-      _OnboardPage(
-        badge: isTr ? 'Büyüme Platformu' : 'Growth Platform',
-        title: isTr
-            ? 'Sosyal medyadan\ngelen ziyaretçiyi\nrandevuya dönüştür'
-            : 'Turn social media\nvisitors into\nbookings',
-        desc: isTr
-            ? 'Bagla, uzmanların dijital ortamda daha profesyonel görünmesini, daha az zaman harcamasını ve sosyal medyadan gelen kişileri daha kolay danışana dönüştürmesini sağlayan bir büyüme platformudur.'
-            : 'Bagla is a growth platform that helps professionals look more polished online, spend less time on admin, and convert social media visitors into real clients.',
-        icon: Icons.trending_up_rounded,
-        highlights: isTr
-            ? const ['Profesyonel dijital varlık', 'Daha az zaman kaybı', 'Daha fazla randevu']
-            : const ['Professional presence', 'Less admin work', 'More bookings'],
-        gradient: const [Color(0xFF0A0E1A), Color(0xFF0D2137), Color(0xFF0B3D5E)],
-        accent: const Color(0xFF38BDF8),
-        iconBgGradient: const [Color(0xFF0EA5E9), Color(0xFF2563EB)],
-      ),
-      _OnboardPage(
-        badge: isTr ? 'Yapay Zeka' : 'AI-Powered',
-        title: isTr
-            ? 'Yapay zeka ile\nprofesyonel\nprofilini oluştur'
-            : 'Build your\nprofessional profile\nwith AI',
-        desc: isTr
-            ? 'AI destekli profil oluşturucu ile Google\'da öne çık. Mesleğine özel açıklama, hizmet listesi ve SEO uyumlu bio linkini saniyeler içinde oluştur.'
-            : 'Stand out on Google with AI-powered profile creation. Generate profession-specific descriptions, service lists and an SEO-ready bio link in seconds.',
-        icon: Icons.auto_awesome_rounded,
-        highlights: isTr
-            ? const ['Google\'da öne çık', 'SEO uyumlu profil', 'Anında yayın']
-            : const ['Rank on Google', 'SEO-ready profile', 'Instant publish'],
-        gradient: const [Color(0xFF0D0B1E), Color(0xFF1A1050), Color(0xFF2D1060)],
-        accent: const Color(0xFFA78BFA),
-        iconBgGradient: const [Color(0xFF6366F1), Color(0xFF9333EA)],
-      ),
-      _OnboardPage(
-        badge: isTr ? 'Randevu & SMS' : 'Appointments & SMS',
-        title: isTr
-            ? 'Randevularını\nyönet, SMS ile\nmüşterini koru'
-            : 'Manage bookings\nand retain clients\nwith SMS',
-        desc: isTr
-            ? 'Takvim, otomatik SMS hatırlatma ve müşteri takibi ile gününü düzenle. Daha az no-show, daha dolu randevu defteri.'
-            : 'Calendar, automatic SMS reminders and client tracking. Fewer no-shows, a fuller schedule every day.',
-        icon: Icons.calendar_month_rounded,
-        highlights: isTr
-            ? const ['Otomatik hatırlatma', 'Müşteri takibi', 'No-show önleme']
-            : const ['Auto reminders', 'Client tracking', 'No-show prevention'],
-        gradient: const [Color(0xFF051510), Color(0xFF073D2A), Color(0xFF0A5C3E)],
-        accent: const Color(0xFF34D399),
-        iconBgGradient: const [Color(0xFF059669), Color(0xFF0D9488)],
-      ),
-    ];
-
-    final page = pages[_currentPage];
-
+    final loc = AppLocalizations.of(context);
+    final titles = [loc.onboardTitle1, loc.onboardTitle2, loc.onboardTitle3];
+    final descriptions = [loc.onboardDesc1, loc.onboardDesc2, loc.onboardDesc3];
+    final labels = [loc.onboardBadge1, loc.onboardBadge2, loc.onboardBadge3];
+    final colors = [_blue, _teal, _coral];
+    final accent = colors[_current];
     return Scaffold(
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: page.gradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Top bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: page.accent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(99),
-                        border: Border.all(color: page.accent.withValues(alpha: 0.25)),
-                      ),
-                      child: Text(
-                        'bagla.app',
-                        style: TextStyle(
-                          color: page.accent,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Dil değiştirici
-                        GestureDetector(
-                          onTap: () => _switchLocale(context),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(99),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.18),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+      backgroundColor: const Color(0xFFFAFBFD),
+      body: SafeArea(
+          child: Center(
+              child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Column(children: [
+          Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 16, 4),
+              child: Row(children: [
+                Expanded(
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              Image.asset('assets/liik-logo-2.png',
+                                  width: 100,
+                                  height: 54,
+                                  fit: BoxFit.contain,
+                                  semanticLabel: 'Liik'),
+                            ])))),
+                Flexible(
+                    flex: 2,
+                    child:
+                        LiikLanguagePicker(onChanged: widget.onLocaleChange)),
+                TextButton(
+                    onPressed: _goToLogin,
+                    style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8)),
+                    child: Text(loc.onboardSkip,
+                        style: const TextStyle(
+                            color: Color(0xFF667585), fontSize: 12))),
+              ])),
+          Expanded(
+              child: PageView.builder(
+            controller: _controller,
+            itemCount: 3,
+            onPageChanged: (value) => setState(() => _current = value),
+            itemBuilder: (context, index) => LayoutBuilder(
+                builder: (context, size) => SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(28, 16, 28, 20),
+                      child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(minHeight: size.maxHeight - 36),
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  isTr ? '🇹🇷' : '🇬🇧',
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  isTr ? 'TR' : 'EN',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 3),
-                                Icon(
-                                  Icons.swap_horiz_rounded,
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  size: 14,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: _goToLogin,
-                          style: TextButton.styleFrom(
-                            minimumSize: Size.zero,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            skipLabel,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.55),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Pages
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: pages.length,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
-                  itemBuilder: (context, index) {
-                    final p = pages[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Icon hero
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: p.iconBgGradient,
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: p.accent.withValues(alpha: 0.35),
-                                  blurRadius: 28,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Icon(p.icon, color: Colors.white, size: 48),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: p.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(99),
-                              border: Border.all(color: p.accent.withValues(alpha: 0.3)),
-                            ),
-                            child: Text(
-                              p.badge,
-                              style: TextStyle(
-                                color: p.accent,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-
-                          // Title
-                          Text(
-                            p.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Description
-                          Text(
-                            p.desc,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.65),
-                              fontSize: 15,
-                              height: 1.55,
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-
-                          // Highlights
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: p.highlights.map((item) => Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.07),
-                                borderRadius: BorderRadius.circular(99),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.13),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: p.accent,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 7),
-                                  Text(
-                                    item,
+                                SizedBox(
+                                    height: (size.maxHeight * .49)
+                                        .clamp(230.0, 340.0),
+                                    width: double.infinity,
+                                    child: _LiikPreview(
+                                        index: index, accent: colors[index])),
+                                const SizedBox(height: 32),
+                                Text(labels[index],
+                                    style: TextStyle(
+                                        color: colors[index] == _teal
+                                            ? const Color(0xFF008577)
+                                            : colors[index] == _coral
+                                                ? const Color(0xFFC94036)
+                                                : _blue,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 2)),
+                                const SizedBox(height: 13),
+                                Text(titles[index],
                                     style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )).toList(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              // Dots
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(pages.length, (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                    height: 8,
-                    width: _currentPage == i ? 28 : 8,
-                    decoration: BoxDecoration(
-                      color: _currentPage == i
-                          ? page.accent
-                          : Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  )),
-                ),
-              ),
-
-              // CTA button
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_currentPage == pages.length - 1) {
-                        _goToLogin();
-                      } else {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeInOutCubic,
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: page.accent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      _currentPage == pages.length - 1 ? startLabel : nextLabel,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+                                        color: _ink,
+                                        fontSize: 34,
+                                        height: 1.12,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -1.3)),
+                                const SizedBox(height: 16),
+                                Text(descriptions[index],
+                                    style: const TextStyle(
+                                        color: Color(0xFF627183),
+                                        fontSize: 16,
+                                        height: 1.6)),
+                              ])),
+                    )),
+          )),
+          Padding(
+              padding: const EdgeInsets.fromLTRB(28, 12, 28, 16),
+              child: Column(children: [
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                        3,
+                        (i) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              height: 6,
+                              width: i == _current ? 28 : 7,
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                  color: i == _current
+                                      ? accent
+                                      : const Color(0xFFDCE2EA),
+                                  borderRadius: BorderRadius.circular(12)),
+                            ))),
+                const SizedBox(height: 24),
+                SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        if (_current == 2) {
+                          _goToLogin();
+                        } else {
+                          _controller.nextPage(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOutCubic);
+                        }
+                      },
+                      style: FilledButton.styleFrom(
+                          backgroundColor: _ink,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 18, horizontal: 24),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18))),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                                child: Text(
+                                    _current == 2
+                                        ? loc.onboardStart
+                                        : loc.onboardContinue,
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700),
+                                    textAlign: TextAlign.center)),
+                            const SizedBox(width: 12),
+                            const Icon(Icons.arrow_forward_rounded, size: 20),
+                          ]),
+                    )),
+                const SizedBox(height: 8),
+                TextButton(
+                    onPressed: _goToLogin,
+                    child: Text(loc.onboardLogin,
+                        style: const TextStyle(
+                            color: Color(0xFF627183), fontSize: 13))),
+              ])),
+        ]),
+      ))),
     );
   }
+}
+
+class _LiikPreview extends StatelessWidget {
+  final int index;
+  final Color accent;
+  const _LiikPreview({required this.index, required this.accent});
+
+  Widget _tile(IconData icon, String title,
+          {String? subtitle, bool selected = false}) =>
+      Container(
+        margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: selected
+                ? accent.withValues(alpha: .09)
+                : const Color(0xFFF5F7FA),
+            borderRadius: BorderRadius.circular(14),
+            border:
+                Border.all(color: selected ? accent : const Color(0xFFE9EDF2))),
+        child: Row(children: [
+          Icon(icon, color: accent, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(title,
+                    style: const TextStyle(
+                        color: _ink,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700)),
+                if (subtitle != null)
+                  Text(subtitle,
+                      style: const TextStyle(
+                          color: Color(0xFF627183), fontSize: 11)),
+              ])),
+          Icon(selected ? Icons.check_circle_rounded : Icons.north_east_rounded,
+              color: selected ? accent : const Color(0xFF8291A2), size: 17),
+        ]),
+      );
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context) => Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+            color: accent.withValues(alpha: .07),
+            borderRadius: BorderRadius.circular(32)),
+        child: Transform.rotate(
+            angle: index == 0 ? -.035 : .025,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 310),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE8ECF2)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: _ink.withValues(alpha: .07),
+                        blurRadius: 25,
+                        offset: const Offset(0, 12))
+                  ]),
+              child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: SizedBox(
+                      width: 240,
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        if (index == 0) ...[
+                          Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: .1),
+                                  shape: BoxShape.circle),
+                              child: Icon(Icons.person_outline_rounded,
+                                  color: accent, size: 30)),
+                          const SizedBox(height: 10),
+                          Text(AppLocalizations.of(context).onboardPreviewName,
+                              style: const TextStyle(
+                                  color: _ink,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Text(
+                              AppLocalizations.of(context)
+                                  .onboardPreviewTagline,
+                              style: const TextStyle(
+                                  color: Color(0xFF627183), fontSize: 11)),
+                          _tile(
+                              Icons.public_rounded,
+                              AppLocalizations.of(context)
+                                  .onboardPreviewExplore),
+                          _tile(Icons.calendar_today_rounded,
+                              AppLocalizations.of(context).onboardPreviewBook),
+                        ] else if (index == 1) ...[
+                          Row(children: [
+                            Icon(Icons.calendar_month_rounded, color: accent),
+                            const SizedBox(width: 8),
+                            Expanded(
+                                child: Text(
+                                    AppLocalizations.of(context)
+                                        .onboardPreviewCall,
+                                    style: const TextStyle(
+                                        color: _ink,
+                                        fontWeight: FontWeight.w800)))
+                          ]),
+                          const SizedBox(height: 8),
+                          Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                  AppLocalizations.of(context)
+                                      .onboardPreviewDuration,
+                                  style: const TextStyle(
+                                      color: Color(0xFF627183), fontSize: 12))),
+                          const SizedBox(height: 16),
+                          Row(
+                              children: List.generate(
+                                  5,
+                                  (i) => Expanded(
+                                          child: Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 3),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                        decoration: BoxDecoration(
+                                            color: i == 2
+                                                ? accent
+                                                : const Color(0xFFF5F7FA),
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                        child: Text('${18 + i}',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                color: i == 2
+                                                    ? Colors.white
+                                                    : _ink,
+                                                fontWeight: FontWeight.w700)),
+                                      )))),
+                          _tile(Icons.schedule_rounded, '10:30 – 11:00',
+                              selected: true),
+                          _tile(Icons.schedule_rounded, '14:00 – 14:30'),
+                        ] else ...[
+                          Image.asset('assets/liik-logo-2.png',
+                              width: 230, height: 115, fit: BoxFit.contain),
+                          _tile(Icons.link_rounded,
+                              AppLocalizations.of(context).onboardPreviewReady,
+                              subtitle: AppLocalizations.of(context)
+                                  .onboardPreviewShareHint),
+                          _tile(
+                              Icons.ios_share_rounded,
+                              AppLocalizations.of(context)
+                                  .onboardPreviewConnections,
+                              selected: true),
+                        ],
+                      ]))),
+            )),
+      );
 }
-
-class _OnboardPage {
-  final String title;
-  final String desc;
-  final String badge;
-  final IconData icon;
-  final List<String> highlights;
-  final List<Color> gradient;
-  final Color accent;
-  final List<Color> iconBgGradient;
-
-  _OnboardPage({
-    required this.title,
-    required this.desc,
-    required this.badge,
-    required this.icon,
-    required this.highlights,
-    required this.gradient,
-    required this.accent,
-    required this.iconBgGradient,
-  });
-}
-

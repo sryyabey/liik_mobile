@@ -1,3 +1,4 @@
+import 'package:bagla_mobile/l10n/app_localizations.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -23,6 +24,7 @@ class EmailVerificationPage extends StatefulWidget {
 }
 
 class _EmailVerificationPageState extends State<EmailVerificationPage> {
+  AppLocalizations get loc => AppLocalizations.of(context);
   bool _checking = false;
   bool _resending = false;
   String? _error;
@@ -56,13 +58,13 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
             MaterialPageRoute(builder: (_) => const MainTabsPage()),
           );
         } else {
-          setState(() => _error = 'E-posta henüz doğrulanmadı. Gelen kutunu kontrol et.');
+          setState(() => _error = loc.verifyEmailPending);
         }
       } else {
-        setState(() => _error = 'Doğrulama kontrol edilemedi (HTTP ${res.statusCode}).');
+        setState(() => _error = loc.verifyEmailFailed(res.statusCode));
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Sunucuya bağlanılamadı.');
+      if (mounted) setState(() => _error = loc.authConnectionError);
     } finally {
       if (mounted) setState(() => _checking = false);
     }
@@ -80,14 +82,14 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       );
       if (!mounted) return;
       if (res.statusCode == 200 || res.statusCode == 201) {
-        setState(() => _successMsg = 'Doğrulama e-postası tekrar gönderildi.');
+        setState(() => _successMsg = loc.verifyEmailResent);
         _startCooldown();
       } else {
         final body = jsonDecode(res.body);
-        setState(() => _error = body['message']?.toString() ?? 'Gönderilemedi.');
+        setState(() => _error = body['message']?.toString() ?? loc.commonSendFailed);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Sunucuya bağlanılamadı.');
+      if (mounted) setState(() => _error = loc.authConnectionError);
     } finally {
       if (mounted) setState(() => _resending = false);
     }
@@ -106,7 +108,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: const Color(0xFF0A84FF),
+        color: Color(0xFF0A84FF),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -124,9 +126,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                         size: 56, color: Colors.white),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'E-postanı Doğrula',
-                    style: TextStyle(
+                  Text(
+                    loc.verifyEmailTitle,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -134,7 +136,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${widget.email} adresine bir doğrulama bağlantısı gönderdik.\nBağlantıya tıkladıktan sonra aşağıdaki butona bas.',
+                    loc.verifyEmailDescription(widget.email),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
@@ -182,9 +184,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : const Text(
-                              'E-postamı Doğruladım',
-                              style: TextStyle(
+                          : Text(
+                              loc.verifyEmailCheck,
+                              style: const TextStyle(
                                 color: Color(0xFF0A84FF),
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -217,8 +219,8 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                             )
                           : Text(
                               _resendCooldown > 0
-                                  ? 'Tekrar gönder ($_resendCooldown s)'
-                                  : 'Tekrar gönder',
+                                  ? loc.verifyEmailResendCountdown(_resendCooldown)
+                                  : loc.verifyEmailResend,
                               style: const TextStyle(fontSize: 14),
                             ),
                     ),
@@ -228,7 +230,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      'Farklı bir hesapla giriş yap',
+                      loc.verifyEmailOtherAccount,
                       style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 13),
