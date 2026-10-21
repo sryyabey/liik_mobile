@@ -1,3 +1,5 @@
+import '../user_timezone.dart';
+
 class AppointmentDateUtils {
   static String toIsoDate(DateTime dt) {
     return '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
@@ -12,7 +14,7 @@ class AppointmentDateUtils {
 
   static DateTime parseInputDateOrNow(String value) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty) return DateTime.now();
+    if (trimmed.isEmpty) return UserTimeZone.now();
     final parts = trimmed.split('-');
     if (parts.length == 3) {
       try {
@@ -33,7 +35,7 @@ class AppointmentDateUtils {
     try {
       return DateTime.parse(trimmed);
     } catch (_) {
-      return DateTime.now();
+      return UserTimeZone.now();
     }
   }
 

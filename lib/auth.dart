@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config.dart';
+import 'user_timezone.dart';
 
 const _accessKey = 'bearer_token';
 const _refreshKey = 'refresh_token';
@@ -54,6 +55,7 @@ Future<String?> getRefreshToken() async {
 }
 
 Future<void> clearTokens() async {
+  await UserTimeZone.clear();
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove(_accessKey);
   await prefs.remove(_legacyAccessKey);
@@ -81,8 +83,9 @@ Future<String?> refreshAccessToken() async {
       final data = decoded['data'] ?? decoded;
       final newAccess =
           data['token'] ?? data['access_token'] ?? decoded['access_token'];
-      final newRefresh =
-          data['refresh_token'] ?? data['refreshToken'] ?? decoded['refresh_token'];
+      final newRefresh = data['refresh_token'] ??
+          data['refreshToken'] ??
+          decoded['refresh_token'];
       if (newAccess != null) {
         await saveTokens(
           accessToken: newAccess.toString(),

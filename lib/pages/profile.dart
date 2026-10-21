@@ -1,3 +1,5 @@
+import '../widgets/studio_page.dart';
+import '../user_timezone.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -12,6 +14,7 @@ import '../auth.dart';
 import '../widgets/main_nav.dart';
 import 'package:bagla_mobile/l10n/app_localizations.dart';
 import '../main.dart';
+import '../app_locale.dart';
 import '../login_page.dart';
 import '../dashboard_page.dart';
 
@@ -54,12 +57,13 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _loadingProfile = true;
   bool _savingProfile = false;
   bool _savingPassword = false;
+  String _timezone = 'UTC';
   String? _avatarUrl;
   Uint8List? _avatarBytes;
   String? _avatarFileName;
   Map<String, dynamic>? _packInfo;
-  static const Color _backgroundColor = Color(0xFFF7F9FC);
-  static const Color _primaryColor = Color(0xFF6366F1);
+  static const Color _backgroundColor = StudioPageStyle.background;
+  static const Color _primaryColor = Color(0xFF0866EB);
 
   @override
   void initState() {
@@ -116,7 +120,12 @@ class _ProfilePageState extends State<ProfilePage> {
         final decoded = jsonDecode(response.body);
         final data = decoded['data'] ?? decoded;
 
+        if (!mounted) return;
+        final timezone = data['timezone']?.toString() ?? 'UTC';
+        await UserTimeZone.set(timezone);
+        if (!mounted) return;
         setState(() {
+          _timezone = timezone;
           _nameController.text = data['name'] ?? '';
           _usernameController.text = data['username'] ?? '';
           _descriptionController.text = data['description'] ?? '';
@@ -256,6 +265,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'username': _usernameController.text,
           'description': _descriptionController.text,
           'footer': _footerController.text,
+          'timezone': _timezone,
           'seo_title': _seoTitleController.text,
           'seo_description': _seoDescriptionController.text,
           'seo_keywords': _seoKeywordsController.text,
@@ -274,6 +284,8 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       if (response.statusCode == 200) {
+        await UserTimeZone.set(_timezone);
+        if (!mounted) return;
         _showSnack(loc.profileSaved, success: true);
         _avatarBytes = null;
         setState(() {
@@ -471,153 +483,178 @@ class _ProfilePageState extends State<ProfilePage> {
     required Widget child,
     String? title,
     String? subtitle,
-    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
+    IconData icon = Icons.person_outline_rounded,
+    bool collapsible = false,
+    bool danger = false,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(18),
   }) {
+    final accent = danger ? const Color(0xFFB84444) : _primaryColor;
+    final heading = Row(children: [
+      Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              color: accent.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(11)),
+          child: Icon(icon, color: accent, size: 19)),
+      const SizedBox(width: 12),
+      Expanded(
+          child: Text(title ?? '',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: danger ? accent : const Color(0xFF0C2032)))),
+    ]);
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      padding: padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null)
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          if (subtitle != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 10),
-              child: Text(
-                subtitle,
-                style: const TextStyle(color: Colors.black54),
-              ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color:
+                  danger ? const Color(0xFFF1DCDC) : StudioPageStyle.border)),
+      child: collapsible
+          ? ExpansionTile(
+              key: PageStorageKey(title),
+              maintainState: true,
+              tilePadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              childrenPadding: padding,
+              shape: const Border(),
+              collapsedShape: const Border(),
+              title: heading,
+              subtitle: subtitle == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(subtitle,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.5,
+                              color: StudioPageStyle.secondary))),
+              children: [child],
             )
-          else if (title != null)
-            const SizedBox(height: 10),
-          child,
-        ],
-      ),
+          : Padding(
+              padding: padding,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (title != null) ...[heading, const SizedBox(height: 16)],
+                    if (subtitle != null) ...[
+                      Text(subtitle,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.5,
+                              color: StudioPageStyle.secondary)),
+                      const SizedBox(height: 16)
+                    ],
+                    child,
+                  ])),
     );
   }
 
   Widget _buildAvatar() {
-    Widget avatarChild;
-    if (_avatarBytes != null) {
-      avatarChild = Image.memory(
-        _avatarBytes!,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
-      avatarChild = Image.network(
-        _avatarUrl!,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    } else {
-      avatarChild = const Icon(Icons.person, size: 48);
-    }
-
-    return Column(
-      children: [
-        Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: ClipOval(child: avatarChild),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: _pickAvatar,
-          icon: const Icon(Icons.photo_camera),
-          label: Text(loc.profileAvatarUpload),
-        ),
-      ],
-    );
+    final fallback = Container(
+        color: const Color(0xFFEAF1FF),
+        alignment: Alignment.center,
+        child: Text(
+            _nameController.text.trim().isEmpty
+                ? 'L'
+                : _nameController.text.trim().characters.first.toUpperCase(),
+            style: const TextStyle(
+                fontSize: 32,
+                color: _primaryColor,
+                fontWeight: FontWeight.w800)));
+    final Widget avatar = _avatarBytes != null
+        ? Image.memory(_avatarBytes!, fit: BoxFit.cover)
+        : (_avatarUrl?.isNotEmpty ?? false)
+            ? Image.network(_avatarUrl!,
+                fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback)
+            : fallback;
+    return SizedBox(
+        width: 88,
+        height: 88,
+        child: Stack(children: [
+          Positioned.fill(
+              child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: const Color(0xFFD9E6FA))),
+                  child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24), child: avatar))),
+          Positioned(
+              right: 0,
+              bottom: 0,
+              child: IconButton.filled(
+                  tooltip: loc.profileAvatarUpload,
+                  onPressed: _savingProfile ? null : _pickAvatar,
+                  style: IconButton.styleFrom(
+                      backgroundColor: _primaryColor,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(44, 44)),
+                  icon: const Icon(Icons.add_a_photo_outlined, size: 18))),
+        ]));
   }
 
   Widget _buildHeader() {
-    return _sectionCard(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          _buildAvatar(),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+    final details =
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(
+          _nameController.text.isEmpty
+              ? loc.profileNameMissing
+              : _nameController.text,
+          style: const TextStyle(
+              fontSize: 23,
+              height: 1.2,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -.5,
+              color: StudioPageStyle.ink)),
+      const SizedBox(height: 6),
+      Text(
+          _usernameController.text.isEmpty
+              ? loc.profileUsernamePlaceholder
+              : '@${_usernameController.text}',
+          style: const TextStyle(
+              fontSize: 13, color: _primaryColor, fontWeight: FontWeight.w600)),
+      if (_packInfo?['active_pack'] != null ||
+          _packInfo?['expiry_date'] != null) ...[
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 6, children: [
+          if (_packInfo?['active_pack'] != null)
+            _infoChip(Icons.workspace_premium_outlined,
+                _packInfo!['active_pack'].toString()),
+          if (_packInfo?['expiry_date'] != null)
+            _infoChip(
+                Icons.schedule_outlined, _packInfo!['expiry_date'].toString()),
+        ]),
+      ],
+    ]);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+          gradient: const LinearGradient(
+              colors: [Color(0xFFEAF1FF), Color(0xFFF2FBFA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFDCE7F5))),
+      child: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 300 ||
+            MediaQuery.textScalerOf(context).scale(14) > 20) {
+          return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _nameController.text.isEmpty
-                      ? loc.profileNameMissing
-                      : _nameController.text,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  _usernameController.text.isEmpty
-                      ? loc.profileUsernamePlaceholder
-                      : '@${_usernameController.text}',
-                  style: const TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 8),
-                if (_packInfo != null)
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 4,
-                    children: [
-                      if (_packInfo?['active_pack'] != null)
-                        _infoChip(
-                          Icons.local_fire_department,
-                          _packInfo!['active_pack'].toString(),
-                        ),
-                      if (_packInfo?['expiry_date'] != null)
-                        _infoChip(
-                          Icons.schedule,
-                          _packInfo!['expiry_date'].toString(),
-                        ),
-                      if (_packInfo?['remaining_sms'] != null)
-                        _infoChip(
-                          Icons.sms,
-                          loc.profileSmsCount(_packInfo!['remaining_sms']),
-                        ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+              children: [_buildAvatar(), const SizedBox(height: 16), details]);
+        }
+        return Row(children: [
+          _buildAvatar(),
+          const SizedBox(width: 18),
+          Expanded(child: details)
+        ]);
+      }),
     );
-  }
-
-  Widget _buildLanguageSelector() {
-    return const SizedBox.shrink();
   }
 
   Widget _infoChip(IconData icon, String text) {
@@ -626,7 +663,7 @@ class _ProfilePageState extends State<ProfilePage> {
       label: Text(text),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: _primaryColor.withValues(alpha: 0.2)),
       ),
     );
@@ -636,25 +673,176 @@ class _ProfilePageState extends State<ProfilePage> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: const Color(0xFFF8FAFD),
+      labelStyle:
+          const TextStyle(color: StudioPageStyle.secondary, fontSize: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: StudioPageStyle.border),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: StudioPageStyle.border),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _primaryColor, width: 1.2),
       ),
     );
   }
 
+  Widget _timezoneSelector() =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        InkWell(
+            key: const ValueKey('profile-timezone'),
+            onTap: _savingProfile ? null : _pickTimezone,
+            borderRadius: BorderRadius.circular(14),
+            child: InputDecorator(
+                decoration: _inputDecoration(loc.profileTimezone).copyWith(
+                    prefixIcon: const Icon(Icons.public_outlined),
+                    suffixIcon: const Icon(Icons.expand_more_rounded)),
+                child: Text(_timezone.replaceAll('_', ' '),
+                    style: const TextStyle(fontSize: 14)))),
+        const SizedBox(height: 8),
+        Text(loc.profileTimezoneHint,
+            style: const TextStyle(
+                color: Color(0xFF627183), fontSize: 12, height: 1.5)),
+      ]);
+
+  Future<void> _pickTimezone() async {
+    List<Map<String, dynamic>> zones = [];
+    String query = '';
+    bool loading = true;
+    bool started = false;
+    String? error;
+    Future<void> fetch(StateSetter update, BuildContext sheet) async {
+      update(() {
+        loading = true;
+        error = null;
+      });
+      try {
+        final response = await authGet(
+            Uri.parse('$apiBaseUrl/api/settings/timezones'),
+            headers: {'Accept': 'application/json'});
+        if (response.statusCode != 200) throw Exception();
+        final body = jsonDecode(response.body);
+        zones = (body['data'] as List)
+            .map((zone) => Map<String, dynamic>.from(zone as Map))
+            .toList();
+        if (zones.isEmpty) throw Exception();
+      } catch (_) {
+        error = loc.profileTimezoneLoadError;
+      }
+      if (sheet.mounted) update(() => loading = false);
+    }
+
+    final selected = await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: StudioPageStyle.background,
+        builder: (ctx) => FractionallySizedBox(
+            heightFactor: .9,
+            child: StatefulBuilder(builder: (ctx, update) {
+              if (!started) {
+                started = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (ctx.mounted) fetch(update, ctx);
+                });
+              }
+              final filtered = zones
+                  .where((zone) =>
+                      ('${zone['id'].toString().replaceAll('_', ' ')} ${zone['utc_offset']}')
+                          .toLowerCase()
+                          .contains(query.toLowerCase().trim()))
+                  .toList();
+              return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      20, 16, 20, MediaQuery.viewInsetsOf(ctx).bottom + 16),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Expanded(
+                              child: Text(loc.profileTimezone,
+                                  style: const TextStyle(
+                                      color: Color(0xFF0C2032),
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700))),
+                          IconButton(
+                              tooltip: loc.appointmentsClose,
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              icon: const Icon(Icons.close_rounded))
+                        ]),
+                        const SizedBox(height: 12),
+                        TextField(
+                            key: const ValueKey('timezone-search'),
+                            onChanged: (value) => update(() => query = value),
+                            decoration:
+                                _inputDecoration(loc.profileTimezoneSearch)
+                                    .copyWith(
+                                        prefixIcon:
+                                            const Icon(Icons.search_rounded))),
+                        const SizedBox(height: 16),
+                        Expanded(
+                            child: loading
+                                ? const Center(
+                                    child: CircularProgressIndicator())
+                                : error != null
+                                    ? SingleChildScrollView(
+                                        child: Column(children: [
+                                        Text(error!),
+                                        const SizedBox(height: 12),
+                                        OutlinedButton.icon(
+                                            onPressed: () => fetch(update, ctx),
+                                            icon: const Icon(Icons.refresh),
+                                            label: Text(loc.customersRetry))
+                                      ]))
+                                    : filtered.isEmpty
+                                        ? Center(
+                                            child: Text(loc.myLinksNoResults))
+                                        : ListView.separated(
+                                            itemCount: filtered.length,
+                                            separatorBuilder: (_, __) =>
+                                                const Divider(
+                                                    height: 1,
+                                                    color: Color(0xFFE5EAF1)),
+                                            itemBuilder: (_, index) {
+                                              final zone = filtered[index];
+                                              final id = zone['id'].toString();
+                                              return ListTile(
+                                                  contentPadding:
+                                                      EdgeInsets.zero,
+                                                  title: Text(zone['label']
+                                                          ?.toString() ??
+                                                      id.replaceAll('_', ' ')),
+                                                  subtitle: Text(
+                                                      'UTC${zone['utc_offset'] ?? ''}'),
+                                                  trailing: id == _timezone
+                                                      ? const Icon(
+                                                          Icons
+                                                              .check_circle_rounded,
+                                                          color:
+                                                              Color(0xFF0866EB))
+                                                      : null,
+                                                  onTap: () => Navigator.of(ctx)
+                                                      .pop(id));
+                                            })),
+                      ]));
+            })));
+    if (selected != null && mounted) {
+      setState(() {
+        _timezone = selected;
+        _profileSavedRecently = false;
+      });
+    }
+  }
+
   Widget _buildProfileForm() {
     return _sectionCard(
       title: loc.profileInfoTitle,
+      icon: Icons.badge_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -667,6 +855,8 @@ class _ProfilePageState extends State<ProfilePage> {
             controller: _usernameController,
             decoration: _inputDecoration(loc.profileFieldUsername),
           ),
+          const SizedBox(height: 12),
+          _timezoneSelector(),
           const SizedBox(height: 12),
           TextField(
             controller: _descriptionController,
@@ -686,6 +876,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildSeoForm() {
     return _sectionCard(
       title: loc.profileSeoSectionTitle,
+      icon: Icons.travel_explore_rounded,
+      collapsible: true,
       subtitle: loc.profileSeoSubtitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -705,47 +897,6 @@ class _ProfilePageState extends State<ProfilePage> {
             controller: _seoKeywordsController,
             decoration: _inputDecoration(loc.profileSeoKeywordsLabel),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _savingProfile ? null : _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: _savingProfile
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save),
-                  label: Text(_savingProfile ? loc.profileSaving : loc.save),
-                ),
-              ),
-              const SizedBox(width: 10),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: _profileSavedRecently
-                    ? const Icon(Icons.check_circle,
-                        key: ValueKey('profile_saved'),
-                        color: Colors.green,
-                        size: 28)
-                    : const SizedBox(
-                        key: ValueKey('profile_unsaved'),
-                        width: 28,
-                        height: 28,
-                      ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -754,6 +905,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildPasswordForm() {
     return _sectionCard(
       title: loc.profilePasswordSectionTitle,
+      icon: Icons.lock_outline_rounded,
+      collapsible: true,
       subtitle:
           _passwordSavedRecently ? loc.profilePasswordUpdatedSubtitle : null,
       child: Column(
@@ -827,6 +980,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildDeleteAccountSection() {
     return _sectionCard(
       title: loc.profileDeleteSectionTitle,
+      icon: Icons.manage_accounts_outlined,
+      collapsible: true,
+      danger: true,
       subtitle: loc.profileDeleteSectionSubtitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,17 +1017,33 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentLang = Localizations.localeOf(context).languageCode;
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        title: Text(
-          loc.profileTitle,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
+        backgroundColor: _backgroundColor,
+        foregroundColor: StudioPageStyle.ink,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
+        title: Row(children: [
+          Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  color: const Color(0xFFEAF1FF),
+                  borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.person_outline_rounded,
+                  size: 18, color: _primaryColor)),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Text(loc.profileTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w700))),
+        ]),
         actions: [
           IconButton(
             tooltip: loc.dashboardHome,
@@ -884,95 +1056,115 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             },
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: currentLang == 'en' ? 'en' : 'tr',
-                onChanged: (val) async {
-                  if (val == null) return;
-                  final baglaState =
-                      context.findAncestorStateOfType<BaglaAppState>();
-                  final locale = Locale(val);
-                  if (baglaState != null) {
-                    baglaState.setLocale(locale);
-                  }
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('preferred_locale', val);
-                  _showSnack(loc.profileLanguageSaved, success: true);
-                },
-                items: [
-                  DropdownMenuItem(
-                    value: 'tr',
-                    child: Text(loc.profileLanguageTurkish),
-                  ),
-                  DropdownMenuItem(
-                    value: 'en',
-                    child: Text(loc.profileLanguageEnglish),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
-      body: _loadingProfile
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadProfile,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (_profileSavedRecently)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                loc.profileSaved,
-                                style: const TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+      body: StudioPageBackground(
+          child: _loadingProfile
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _loadProfile,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_profileSavedRecently)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green.shade200),
                             ),
-                          ],
-                        ),
-                      ),
-                    _buildHeader(),
-                    const SizedBox(height: 12),
-                    _buildProfileForm(),
-                    const SizedBox(height: 12),
-                    _buildSeoForm(),
-                    const SizedBox(height: 12),
-                    _buildLanguageSelector(),
-                    const SizedBox(height: 12),
-                    _buildPasswordForm(),
-                    const SizedBox(height: 12),
-                    _buildDeleteAccountSection(),
-                  ],
-                ),
-              ),
-            ),
-      bottomNavigationBar: widget.showBottomNav
-          ? MainNavBar(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle,
+                                    color: Colors.green),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    loc.profileSaved,
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        StudioPageIntro(loc.profileDesignIntro),
+                        _buildHeader(),
+                        const SizedBox(height: 12),
+                        _buildProfileForm(),
+                        const SizedBox(height: 12),
+                        _buildSeoForm(),
+                        const SizedBox(height: 12),
+                        _sectionCard(
+                            title: loc.profileLanguage,
+                            icon: Icons.language_rounded,
+                            child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: LiikLanguagePicker(onChanged: (locale) {
+                                  context
+                                      .findAncestorStateOfType<BaglaAppState>()
+                                      ?.setLocale(locale);
+                                }))),
+                        const SizedBox(height: 12),
+                        _buildPasswordForm(),
+                        const SizedBox(height: 12),
+                        _buildDeleteAccountSection(),
+                      ],
+                    ),
+                  ),
+                )),
+      bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (!_loadingProfile)
+          Container(
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border:
+                      Border(top: BorderSide(color: StudioPageStyle.border))),
+              child: SafeArea(
+                  top: false,
+                  bottom: !widget.showBottomNav,
+                  minimum: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _savingProfile ? null : _saveProfile,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        icon: _savingProfile
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : Icon(
+                                _profileSavedRecently
+                                    ? Icons.check_circle_outline
+                                    : Icons.save_outlined,
+                                size: 20),
+                        label: Text(
+                            _savingProfile ? loc.profileSaving : loc.save,
+                            textAlign: TextAlign.center),
+                      )))),
+        if (widget.showBottomNav)
+          MainNavBar(
               currentIndex: 3,
               onIndexSelected: widget.onTabSelected,
-              allowReselectCurrent: true,
-            )
-          : null,
+              allowReselectCurrent: true),
+      ]),
     );
   }
 }
