@@ -19,7 +19,7 @@ val flutterVersionCode =
     project.findProperty("flutter.versionCode")?.toString()?.toIntOrNull() ?: 1
 val flutterVersionName =
     project.findProperty("flutter.versionName")?.toString() ?: "1.0"
-val appId = project.findProperty("APP_ID")?.toString() ?: "com.bagla.app"
+val appId = project.findProperty("APP_ID")?.toString() ?: "dev.sryya.liik"
 
 
 val hasReleaseKeystore =
@@ -31,7 +31,8 @@ val hasReleaseKeystore =
 android {
     namespace = appId
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // NDK r28+ produces 16 KB page-size compatible native libraries by default.
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -61,8 +62,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             signingConfig = signingConfigs.getByName("release")
         }
     }
