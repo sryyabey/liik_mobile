@@ -412,7 +412,7 @@ class _WorkingPreferencesPageState extends State<WorkingPreferencesPage> {
   }
 
   Widget _buildTemplatesCard() {
-    final templates = _buildTemplates();
+    final templates = _buildTemplates(context);
     return _sectionCard(
       title: loc.workingPrefsTemplatesTitle,
       subtitle: loc.workingPrefsTemplatesSubtitle,
@@ -1290,14 +1290,14 @@ class _ScheduleTemplate {
   });
 }
 
-List<_ScheduleTemplate> _buildTemplates() {
+List<_ScheduleTemplate> _buildTemplates(BuildContext context) {
   _TimeSlot slot(String start, String end, int period) =>
       _TimeSlot(start: '$start:00', end: '$end:00', period: period);
 
   return [
     _ScheduleTemplate(
-      name: 'Standart',
-      description: 'Pzt–Cum  09:00–12:00 / 13:00–17:00  •  20 dk',
+      name: AppLocalizations.of(context).workingTemplateStandard,
+      description: AppLocalizations.of(context).workingTemplateStandardDescription,
       icon: Icons.work_outline_rounded,
       build: () => List.generate(7, (i) {
         final day = i + 1;
@@ -1313,8 +1313,8 @@ List<_ScheduleTemplate> _buildTemplates() {
       }),
     ),
     _ScheduleTemplate(
-      name: 'Öğleden Sonra',
-      description: 'Pzt–Cum  13:00–17:00  •  20 dk',
+      name: AppLocalizations.of(context).workingTemplateAfternoon,
+      description: AppLocalizations.of(context).workingTemplateAfternoonDescription,
       icon: Icons.wb_sunny_outlined,
       build: () => List.generate(7, (i) {
         final day = i + 1;
@@ -1327,8 +1327,8 @@ List<_ScheduleTemplate> _buildTemplates() {
       }),
     ),
     _ScheduleTemplate(
-      name: 'Uzman',
-      description: 'Pzt–Cmt  09:00–12:00 / 13:00–17:00  •  20 dk',
+      name: AppLocalizations.of(context).workingTemplateExpert,
+      description: AppLocalizations.of(context).workingTemplateExpertDescription,
       icon: Icons.star_outline_rounded,
       build: () => List.generate(7, (i) {
         final day = i + 1;
@@ -1344,8 +1344,8 @@ List<_ScheduleTemplate> _buildTemplates() {
       }),
     ),
     _ScheduleTemplate(
-      name: 'Akşam',
-      description: 'Pzt–Cmt  17:00–21:00  •  45 dk',
+      name: AppLocalizations.of(context).workingTemplateEvening,
+      description: AppLocalizations.of(context).workingTemplateEveningDescription,
       icon: Icons.nights_stay_outlined,
       build: () => List.generate(7, (i) {
         final day = i + 1;
@@ -1358,8 +1358,8 @@ List<_ScheduleTemplate> _buildTemplates() {
       }),
     ),
     _ScheduleTemplate(
-      name: 'Hafta Sonu',
-      description: 'Cmt–Paz  10:00–17:00  •  30 dk',
+      name: AppLocalizations.of(context).workingTemplateWeekend,
+      description: AppLocalizations.of(context).workingTemplateWeekendDescription,
       icon: Icons.weekend_outlined,
       build: () => List.generate(7, (i) {
         final day = i + 1;

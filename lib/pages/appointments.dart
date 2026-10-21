@@ -1,16 +1,17 @@
+import '../widgets/studio_page.dart';
+import '../user_timezone.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:bagla_mobile/auth.dart';
 import 'package:bagla_mobile/config.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../utils/appointment_date_utils.dart';
-import '../dashboard_page.dart';
 import '../login_page.dart';
-import 'pack_page_router.dart';
-import 'working_preferences.dart';
 import '../widgets/main_nav.dart';
+import '../widgets/appointment_booking_flow.dart';
+import '../widgets/appointment_details.dart';
 import 'package:bagla_mobile/l10n/app_localizations.dart';
 
 // ─────────────────────────────────────────────
@@ -18,45 +19,33 @@ import 'package:bagla_mobile/l10n/app_localizations.dart';
 // ─────────────────────────────────────────────
 class _T {
   // Background layers
-  static const bg = Color(0xFFF7F8FA);
+  static const bg = StudioPageStyle.background;
   static const surface = Color(0xFFFFFFFF);
   static const surfaceAlt = Color(0xFFF2F4F7);
 
   // Brand
-  static const primary = Color(0xFF4F6EF7);
-  static const primarySoft = Color(0xFFEEF1FE);
+  static const primary = Color(0xFF0866EB);
+  static const primarySoft = Color(0xFFEAF1FF);
 
   // Semantic
   static const success = Color(0xFF22C55E);
   static const danger = Color(0xFFEF4444);
   static const dangerSoft = Color(0xFFFEF2F2);
-  static const warning = Color(0xFFF59E0B);
-  static const warningSoft = Color(0xFFFFFBEB);
 
   // Ink
-  static const ink = Color(0xFF111827);
-  static const inkSecondary = Color(0xFF6B7280);
+  static const ink = Color(0xFF0C2032);
+  static const inkSecondary = Color(0xFF627183);
   static const inkDisabled = Color(0xFFB0B7C3);
 
   // Stroke
   static const border = Color(0xFFE5E7EB);
-  static const borderFocus = Color(0xFF4F6EF7);
+  static const borderFocus = Color(0xFF0866EB);
 
   // Radii
   static const r4 = 4.0;
   static const r8 = 8.0;
   static const r12 = 12.0;
-  static const r16 = 16.0;
   static const r10 = 10.0;
-  static const r14 = 14.0;
-
-  // Elevation shadow
-  static List<BoxShadow> shadow1 = [
-    BoxShadow(
-        color: Colors.black.withValues(alpha: 0.04),
-        blurRadius: 8,
-        offset: const Offset(0, 2)),
-  ];
 }
 
 // ─────────────────────────────────────────────
@@ -78,7 +67,7 @@ InputDecoration _fieldDecor({
     hintStyle: const TextStyle(fontSize: 13, color: _T.inkDisabled),
     errorStyle: const TextStyle(fontSize: 12, color: _T.danger),
     filled: true,
-    fillColor: _T.surface,
+    fillColor: const Color(0xFFF7F9FC),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(_T.r12),
@@ -106,64 +95,6 @@ InputDecoration _fieldDecor({
 // ─────────────────────────────────────────────
 // Phone mask formatter (unchanged)
 // ─────────────────────────────────────────────
-class _PhoneMaskFormatter extends TextInputFormatter {
-  static final RegExp _digitsOnly = RegExp(r'\D');
-
-  String _mask(String raw) {
-    final digits = raw.replaceAll(_digitsOnly, '');
-    final limited = digits.length > 10 ? digits.substring(0, 10) : digits;
-    final b = StringBuffer();
-    if (limited.isNotEmpty) {
-      b.write('(');
-      b.write(limited.substring(0, limited.length.clamp(0, 3)));
-      if (limited.length >= 3) b.write(')');
-    }
-    if (limited.length > 3) {
-      b.write(' ');
-      b.write(limited.substring(3, limited.length.clamp(3, 6)));
-    }
-    if (limited.length > 6) {
-      b.write(' ');
-      b.write(limited.substring(6, limited.length.clamp(6, 8)));
-    }
-    if (limited.length > 8) {
-      b.write(' ');
-      b.write(limited.substring(8, limited.length.clamp(8, 10)));
-    }
-    return b.toString();
-  }
-
-  int _digitCount(String text, int endOffset) {
-    final left = text.substring(0, endOffset.clamp(0, text.length));
-    return left.replaceAll(_digitsOnly, '').length;
-  }
-
-  int _offsetForDigits(String masked, int digits) {
-    if (digits <= 0) return 0;
-    int seen = 0;
-    for (int i = 0; i < masked.length; i++) {
-      final c = masked.codeUnitAt(i);
-      if (c >= 48 && c <= 57) {
-        seen++;
-        if (seen == digits) return i + 1;
-      }
-    }
-    return masked.length;
-  }
-
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final masked = _mask(newValue.text);
-    final digitsBefore = _digitCount(newValue.text, newValue.selection.end);
-    final target = _offsetForDigits(masked, digitsBefore);
-    return TextEditingValue(
-        text: masked,
-        selection: TextSelection.collapsed(offset: target),
-        composing: TextRange.empty);
-  }
-}
-
 // ─────────────────────────────────────────────
 // API envelope (unchanged)
 // ─────────────────────────────────────────────
@@ -220,18 +151,12 @@ class AppointmentsPage extends StatefulWidget {
   State<AppointmentsPage> createState() => _AppointmentsPageState();
 }
 
-class _AppointmentsPageState extends State<AppointmentsPage> {
+class _AppointmentsPageState extends State<AppointmentsPage>
+    with AppointmentBookingFlow<AppointmentsPage> {
+  @override
   AppLocalizations get loc => AppLocalizations.of(context);
 
   // Controllers
-  final _quickNameCtrl = TextEditingController();
-  final _quickLastNameCtrl = TextEditingController();
-  final _quickCountryIdCtrl = TextEditingController();
-  final _quickPhoneCtrl = TextEditingController();
-  final _quickEmailCtrl = TextEditingController();
-  final _quickDateCtrl = TextEditingController();
-  final _quickTimeCtrl = TextEditingController();
-  final _quickNoteCtrl = TextEditingController();
   final _filterNameCtrl = TextEditingController();
   final _filterLastNameCtrl = TextEditingController();
   final _filterPhoneCtrl = TextEditingController();
@@ -239,38 +164,23 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   final _filterDateToCtrl = TextEditingController();
   final _filterTimeFromCtrl = TextEditingController();
   final _filterTimeToCtrl = TextEditingController();
-  final _phoneMaskFormatter = _PhoneMaskFormatter();
 
   // State
   List<Map<String, dynamic>> _appointments = [];
-  List<Map<String, dynamic>> _countries = [];
   List<Map<String, dynamic>> _appointmentStatuses = [];
-  List<Map<String, dynamic>> _timeSlots = [];
   Map<String, String> _activeFilters = {};
 
   bool _loadingList = true;
   bool _savingAppointment = false;
-  bool _savingQuick = false;
   bool _creatingRebook = false;
   bool _loadingCustomerInfo = false;
-  bool _quickIsFirstAppointment = false;
-  bool _quickNoSms = false;
-  bool _quickNoReminder = false;
-  bool _showQuickForm = false;
-  bool _loadingSlots = false;
-  bool _slotsRequested = false;
-  bool _loadingCountries = false;
+
   bool _loadingStatuses = false;
   bool _showFilters = false;
   bool _hasUserPack = true;
-  String _remainingSms = '-';
 
   String? _error;
-  String? _slotsError;
-  String? _countriesError;
   String? _statusesError;
-  String? _selectedSlotTime;
-  int? _selectedCountryId;
 
   final List<String> _timeOptions = List.generate(
     24 * 12,
@@ -282,36 +192,50 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialQuickDate != null)
-      _quickDateCtrl.text = _normalizeSlotDate(widget.initialQuickDate!);
-    if (widget.initialQuickTime != null) {
-      _quickTimeCtrl.text = widget.initialQuickTime!;
-      _selectedSlotTime = widget.initialQuickTime;
-    }
-    if (widget.autoShowQuick ||
-        widget.initialQuickDate != null ||
-        widget.initialQuickTime != null) _showQuickForm = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchAppointments();
-      _refreshRemainingSms();
-      _fetchCountries();
+    UserTimeZone.changes.addListener(_onTimezoneChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _fetchAppointments();
+      if (!mounted) return;
       _fetchStatuses();
-      if (_showQuickForm && _quickDateCtrl.text.trim().isNotEmpty)
-        _fetchTimeSlots();
+      if (widget.autoShowQuick ||
+          widget.initialQuickDate != null ||
+          widget.initialQuickTime != null) {
+        await _openBooking();
+      }
     });
   }
 
   @override
+  Future<bool> ensureBookingAccess() async {
+    if (_hasUserPack) return true;
+    _showSnack(loc.appointmentsPlanRequired);
+    return false;
+  }
+
+  @override
+  Future<void> refreshAfterBooking() => _fetchAppointments();
+  @override
+  Future<void> handleBookingSessionExpired() => _redirectToLogin();
+  @override
+  void showBookingMessage(String message, {bool success = false}) =>
+      _showSnack(message, success: success);
+
+  Future<void> _openBooking() async {
+    await showBookingSheet(
+      initialDate: widget.initialQuickDate ??
+          DateFormat('yyyy-MM-dd').format(UserTimeZone.now()),
+      initialTime: widget.initialQuickTime ?? '',
+    );
+  }
+
+  void _onTimezoneChanged() {
+    if (mounted && UserTimeZone.name != null) _fetchAppointments();
+  }
+
+  @override
   void dispose() {
+    UserTimeZone.changes.removeListener(_onTimezoneChanged);
     for (final c in [
-      _quickNameCtrl,
-      _quickLastNameCtrl,
-      _quickCountryIdCtrl,
-      _quickPhoneCtrl,
-      _quickEmailCtrl,
-      _quickDateCtrl,
-      _quickTimeCtrl,
-      _quickNoteCtrl,
       _filterNameCtrl,
       _filterLastNameCtrl,
       _filterPhoneCtrl,
@@ -406,25 +330,20 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   }
 
   Future<bool> _handleIssueByCode(_ApiEnvelope env,
-      {bool allowPackageNavigation = true,
-      bool firstAppointmentFlow = false}) async {
+      {bool firstAppointmentFlow = false}) async {
     final code = _normalizedIssueCode(env);
     if (code.isEmpty && env.statusCode >= 200 && env.statusCode < 300)
       return false;
     switch (code) {
       case 'NO_PACKAGE':
         _hasUserPack = false;
-        _showSnack(loc.appointmentsPackageRequired);
-        if (allowPackageNavigation && mounted)
-          await Navigator.push(context,
-              MaterialPageRoute(builder: (_) => buildPackPageForPlatform()));
+        _showSnack(loc.appointmentsPlanRequired);
+
         return true;
       case 'HOLIDAY':
         _showSnack(_holidayWarningMessage(env));
         return true;
       case 'SLOT_BUSY':
-        _selectedSlotTime = null;
-        _quickTimeCtrl.clear();
         final msg = env.message?.trim();
         _showSnack(msg != null && msg.isNotEmpty
             ? msg
@@ -461,7 +380,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   dynamic _dataOrPayload(_ApiEnvelope env) => env.data ?? env.payload;
 
   int _countToday() {
-    final today = DateTime.now();
+    final today = UserTimeZone.now();
     return _appointments.where((a) {
       try {
         final d = DateTime.parse(a['date']?.toString() ?? '');
@@ -504,7 +423,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     if (date == null || date.isEmpty) return '';
     try {
       final p = DateTime.parse(date);
-      return '${p.day.toString().padLeft(2, '0')}.${p.month.toString().padLeft(2, '0')}.${p.year}';
+      return DateFormat.yMMMd(Localizations.localeOf(context).toString())
+          .format(p);
     } catch (_) {
       return date;
     }
@@ -519,56 +439,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         return '${p[0].padLeft(2, '0')}:${p[1].padLeft(2, '0')}';
     }
     return s;
-  }
-
-  String _appointmentDeliveryResultMessage({
-    required bool noSms,
-    required bool noReminder,
-  }) {
-    if (noSms && noReminder) {
-      return 'No SMS will be sent for this appointment. SMS balance will not be deducted.';
-    }
-    if (!noSms && !noReminder) {
-      return 'SMS balance is deducted only when confirmation SMS or reminder SMS is actually sent.';
-    }
-    if (!noSms) {
-      return 'SMS balance is deducted only if the confirmation SMS is sent.';
-    }
-    return 'SMS balance is deducted only if the reminder SMS is sent.';
-  }
-
-  Widget _buildSmsConsumptionCallout({
-    required bool noSms,
-    required bool noReminder,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(_T.r10),
-        border: Border.all(color: const Color(0xFFFCD34D)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline, color: _T.warning, size: 16),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _appointmentDeliveryResultMessage(
-                noSms: noSms,
-                noReminder: noReminder,
-              ),
-              style: const TextStyle(
-                fontSize: 12,
-                color: _T.inkSecondary,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Color _statusColor(String? hex) {
@@ -646,46 +516,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     ));
   }
 
-  void _navigateToDashboard() {
-    Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardPage()));
-  }
-
-  Future<void> _refreshRemainingSms() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      return;
-    }
-    try {
-      final resp = await authGet(
-        Uri.parse('$apiBaseUrl/api/dashboard'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json'
-        },
-      );
-      if (resp.statusCode != 200) {
-        return;
-      }
-      final decoded = jsonDecode(resp.body);
-      final data = decoded['data'] ?? decoded;
-      final packInfo = data is Map<String, dynamic>
-          ? data['pack_info']
-          : (data is Map ? Map<String, dynamic>.from(data)['pack_info'] : null);
-      final remaining =
-          packInfo is Map ? packInfo['remaining_sms']?.toString() : null;
-      if (!mounted || remaining == null || remaining.isEmpty) {
-        return;
-      }
-      setState(() {
-        _remainingSms = remaining;
-      });
-    } catch (_) {}
-  }
-
   Future<void> _refreshAppointmentsPage() async {
     await _fetchAppointments();
-    await _refreshRemainingSms();
   }
 
   // ── API calls ───────────────────────────────
@@ -717,7 +549,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         if (!mounted) return;
         setState(() {
           _loadingList = false;
-          _error = env.message ?? loc.appointmentsPackageRequired;
+          _error = env.message ?? loc.appointmentsPlanRequired;
         });
         return;
       }
@@ -743,7 +575,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           _appointments = list;
           _loadingList = false;
           _hasUserPack = pack ?? true;
-          if (!_hasUserPack) _showQuickForm = false;
         });
       } else {
         setState(() {
@@ -756,69 +587,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
       setState(() {
         _error = loc.appointmentsFetchFailed(e.toString());
         _loadingList = false;
-      });
-    }
-  }
-
-  Future<void> _fetchCountries() async {
-    setState(() {
-      _loadingCountries = true;
-      _countriesError = null;
-    });
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _loadingCountries = false;
-        _countriesError = loc.calendarSessionMissing;
-      });
-      return;
-    }
-    try {
-      final resp = await authGet(
-          Uri.parse('$apiBaseUrl/api/settings/countries'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json'
-          });
-      final env = _parseEnvelope(resp);
-      if (await _handleIssueByCode(env)) {
-        if (!mounted) return;
-        setState(() {
-          _loadingCountries = false;
-          _countriesError = env.message ??
-              loc.appointmentsCountriesFetchFailedStatus(
-                  resp.statusCode.toString());
-        });
-        return;
-      }
-      if (env.isSuccess) {
-        final data = _dataOrPayload(env);
-        final list = data is List
-            ? List<Map<String, dynamic>>.from(
-                data.map((e) => Map<String, dynamic>.from(e)))
-            : <Map<String, dynamic>>[];
-        if (!mounted) return;
-        setState(() {
-          _countries = list;
-          if (_selectedCountryId == null && _countries.isNotEmpty) {
-            _selectedCountryId = _countries.first['id'] as int?;
-            _quickCountryIdCtrl.text =
-                _selectedCountryId != null ? '$_selectedCountryId' : '';
-          }
-          _loadingCountries = false;
-        });
-      } else {
-        setState(() {
-          _loadingCountries = false;
-          _countriesError = env.message ??
-              loc.appointmentsCountriesFetchFailedStatus(
-                  resp.statusCode.toString());
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _loadingCountries = false;
-        _countriesError = loc.appointmentsCountriesFetchFailed(e.toString());
       });
     }
   }
@@ -881,30 +649,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     }
   }
 
-  void _resetQuickForm() {
-    setState(() {
-      for (final c in [
-        _quickNameCtrl,
-        _quickLastNameCtrl,
-        _quickCountryIdCtrl,
-        _quickPhoneCtrl,
-        _quickEmailCtrl,
-        _quickDateCtrl,
-        _quickTimeCtrl,
-        _quickNoteCtrl
-      ]) {
-        c.clear();
-      }
-      _selectedSlotTime = null;
-      _timeSlots = [];
-      _slotsError = null;
-      _quickIsFirstAppointment = false;
-      _quickNoSms = false;
-      _quickNoReminder = false;
-      _showQuickForm = false;
-    });
-  }
-
   Future<void> _applyFilters() async {
     if (_filterTimeFromCtrl.text.trim().isNotEmpty &&
         !_isValidTime(_filterTimeFromCtrl.text.trim())) {
@@ -941,176 +685,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     _fetchAppointments(filters: {});
   }
 
-  Future<void> _pickQuickDate() async {
-    final today = DateTime.now();
-    final minDate = DateTime(today.year, today.month, today.day);
-    final maxDate = DateTime(today.year + 5, 12, 31);
-    final initial =
-        _clampDate(_parseInputDateOrNow(_quickDateCtrl.text), minDate, maxDate);
-    final picked = await showDatePicker(
-        context: context,
-        initialDate: initial,
-        firstDate: minDate,
-        lastDate: maxDate);
-    if (picked != null) {
-      setState(() {
-        _quickDateCtrl.text = _formatDateDisplay(picked);
-        _selectedSlotTime = null;
-        _quickTimeCtrl.clear();
-        _timeSlots = [];
-      });
-      await _fetchTimeSlots();
-    }
-  }
-
-  Future<void> _fetchTimeSlots() async {
-    final dateInput = _quickDateCtrl.text.trim();
-    if (dateInput.isEmpty) {
-      _showSnack(loc.appointmentsEnterDateFirst);
-      return;
-    }
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      _showSnack(loc.appointmentsSessionMissingLogin);
-      return;
-    }
-    setState(() {
-      _loadingSlots = true;
-      _slotsRequested = true;
-      _slotsError = null;
-      _timeSlots = [];
-      _selectedSlotTime = null;
-      _quickTimeCtrl.clear();
-    });
-    try {
-      final resp = await authGet(
-          Uri.parse(
-              '$apiBaseUrl/api/appointments/time-slots?date=${_normalizeSlotDate(dateInput)}'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json'
-          });
-      final env = _parseEnvelope(resp);
-      if (await _handleIssueByCode(env)) {
-        if (!mounted) return;
-        setState(() {
-          _slotsError = env.message ??
-              loc.appointmentsSlotsFetchFailedStatus(
-                  resp.statusCode.toString());
-          _loadingSlots = false;
-        });
-        return;
-      }
-      if (env.isSuccess) {
-        final data = _dataOrPayload(env);
-        if (!mounted) return;
-        setState(() {
-          _timeSlots = data is List
-              ? List<Map<String, dynamic>>.from(
-                  data.map((e) => Map<String, dynamic>.from(e)))
-              : [];
-          _loadingSlots = false;
-        });
-      } else {
-        setState(() {
-          _slotsError = env.message ??
-              loc.appointmentsSlotsFetchFailedStatus(
-                  resp.statusCode.toString());
-          _loadingSlots = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _slotsError = loc.appointmentsSlotsFetchFailed(e.toString());
-        _loadingSlots = false;
-      });
-    }
-  }
-
-  Future<void> _submitQuickAppointment() async {
-    if (_savingQuick) return;
-    if (!_hasUserPack) {
-      _showSnack(loc.appointmentsPackageRequired);
-      return;
-    }
-    final firstName = _quickNameCtrl.text.trim();
-    final lastName = _quickLastNameCtrl.text.trim();
-    final countryId =
-        _selectedCountryId ?? int.tryParse(_quickCountryIdCtrl.text.trim());
-    final phone = _quickPhoneCtrl.text.trim();
-    final email = _quickEmailCtrl.text.trim();
-    final date = _quickDateCtrl.text.trim();
-    final normDate = _normalizeSlotDate(date);
-    final time = (_selectedSlotTime ?? _quickTimeCtrl.text).trim();
-    final note = _quickNoteCtrl.text.trim();
-    if (firstName.isEmpty ||
-        lastName.isEmpty ||
-        countryId == null ||
-        phone.isEmpty ||
-        normDate.isEmpty ||
-        time.isEmpty) {
-      _showSnack(loc.appointmentsRequiredFields);
-      return;
-    }
-    if (_timeSlots.isNotEmpty && time.isEmpty) {
-      _showSnack(loc.appointmentsSelectAvailableTime);
-      return;
-    }
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      _showSnack(loc.appointmentsSessionMissingLogin);
-      return;
-    }
-    setState(() {
-      _savingQuick = true;
-    });
-    try {
-      final resp = await authPost(
-          Uri.parse('$apiBaseUrl/api/appointments/quick_appointment'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: jsonEncode({
-            'customer_name': firstName,
-            'customer_lastname': lastName,
-            'country_id': countryId,
-            'phone': phone,
-            'email': email.isEmpty ? null : email,
-            'date': normDate,
-            'time': time,
-            'note': note,
-            'is_first_appointment': _quickIsFirstAppointment,
-            'no_sms': _quickNoSms,
-            'no_reminder': _quickNoReminder
-          }));
-      final env = _parseEnvelope(resp);
-      if (env.isSuccess) {
-        _showSnack(
-          '${loc.appointmentsCreateSuccess} ${_appointmentDeliveryResultMessage(noSms: _quickNoSms, noReminder: _quickNoReminder)}',
-          success: true,
-        );
-        await _fetchAppointments();
-        await _refreshRemainingSms();
-        _resetQuickForm();
-      } else {
-        final h = await _handleIssueByCode(env,
-            firstAppointmentFlow: _quickIsFirstAppointment);
-        if (!h)
-          _showSnack(env.message ??
-              loc.appointmentsCreateFailedStatus(resp.statusCode.toString()));
-      }
-    } catch (e) {
-      _showSnack(loc.appointmentsCreateFailed(e.toString()));
-    } finally {
-      if (mounted)
-        setState(() {
-          _savingQuick = false;
-        });
-    }
-  }
-
   Future<void> _updateAppointment({
     required int appointmentId,
     required int customerId,
@@ -1118,8 +692,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     required String date,
     required String time,
     required String notes,
-    required bool noSms,
-    required bool noReminder,
     String? originalDate,
     String? originalTime,
     bool includeScheduleFields = true,
@@ -1184,17 +756,16 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             if (includeScheduleFields) 'date': normDate,
             if (includeScheduleFields) 'time': normTime,
             'notes': notes,
-            'no_sms': noSms,
-            'no_reminder': noReminder
+            'no_sms': true,
+            'no_reminder': true
           }));
       final env = _parseEnvelope(resp);
       if (env.isSuccess) {
         _showSnack(
-          '${loc.appointmentsUpdateSuccess} ${_appointmentDeliveryResultMessage(noSms: noSms, noReminder: noReminder)}',
+          loc.appointmentsUpdateSuccess,
           success: true,
         );
         await _fetchAppointments();
-        await _refreshRemainingSms();
       } else {
         final h = await _handleIssueByCode(env);
         if (!h)
@@ -1216,13 +787,11 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     required String date,
     required String time,
     required String notes,
-    required bool noSms,
-    required bool noReminder,
     int? appointmentStatusId,
   }) async {
     if (_creatingRebook) return;
     if (!_hasUserPack) {
-      _showSnack(loc.appointmentsPackageRequired);
+      _showSnack(loc.appointmentsPlanRequired);
       return;
     }
     final normDate = _normalizeDateToApi(date) ?? _normalizeSlotDate(date);
@@ -1272,17 +841,16 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             'date': normDate,
             'time': normTime,
             'notes': notes,
-            'no_sms': noSms,
-            'no_reminder': noReminder
+            'no_sms': true,
+            'no_reminder': true
           }));
       final env = _parseEnvelope(resp);
       if (env.isSuccess) {
         _showSnack(
-          '${loc.appointmentsRebookSuccess} ${_appointmentDeliveryResultMessage(noSms: noSms, noReminder: noReminder)}',
+          loc.appointmentsRebookSuccess,
           success: true,
         );
         await _fetchAppointments();
-        await _refreshRemainingSms();
       } else {
         final h = await _handleIssueByCode(env);
         if (!h)
@@ -1311,9 +879,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
           color: _T.surface,
-          borderRadius: BorderRadius.circular(_T.r16),
-          border: Border.all(color: _T.border),
-          boxShadow: _T.shadow1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _T.border)),
       child: Padding(padding: padding, child: child),
     );
   }
@@ -1362,205 +929,96 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   }
 
   // ── Stat chips in header ───────────────────
-  Widget _statChip(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(_T.r12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: Colors.white.withValues(alpha: 0.85)),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.4)),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 17,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _statChip(String label, String value, IconData icon) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _T.border)),
+        child: Row(children: [
+          Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: _T.primarySoft,
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: _T.primary, size: 20)),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(value,
+                    style: const TextStyle(
+                        color: _T.ink,
+                        fontSize: 22,
+                        height: 1.1,
+                        fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                Text(label,
+                    style:
+                        const TextStyle(color: _T.inkSecondary, fontSize: 12)),
+              ])),
+        ]),
+      );
 
   // ── Header ─────────────────────────────────
   Widget _buildHeaderHero() {
     final todayCount = _countToday();
-    final totalCount = _appointments.length;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _T.primary,
-        borderRadius: BorderRadius.circular(_T.r16),
-        boxShadow: [
-          BoxShadow(
-              color: _T.primary.withValues(alpha: 0.28),
-              blurRadius: 20,
-              offset: const Offset(0, 8))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(loc.appointmentManagement,
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.4)),
-                    const SizedBox(height: 4),
-                    Text(loc.appointmentSubtitle,
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.72))),
-                  ],
-                ),
-              ),
-              _iconBtn(
-                Icons.refresh,
-                onTap: _refreshAppointmentsPage,
-                light: true,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              SizedBox(
-                width: 110,
-                child:
-                    _statChip(loc.today, '$todayCount', Icons.today_outlined),
-              ),
-              SizedBox(
-                width: 110,
-                child: _statChip(
-                    loc.total, '$totalCount', Icons.calendar_month_outlined),
-              ),
-              SizedBox(
-                width: 140,
-                child: _statChip(
-                  loc.dashboardRemainingSms,
-                  _remainingSms,
-                  Icons.sms_outlined,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            _headerBtn(
-              label: loc.quickAppointment,
-              icon: Icons.add,
-              filled: true,
-              onTap: () {
-                if (!_hasUserPack) {
-                  _showSnack(loc.appointmentsPackageRequired);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => buildPackPageForPlatform()));
-                  return;
-                }
-                setState(() {
-                  _showQuickForm = true;
-                });
-              },
-            ),
-            _headerBtn(
-              label: _showFilters ? loc.hideFilter : loc.showFilter,
-              icon: _showFilters
-                  ? Icons.filter_alt_off_outlined
-                  : Icons.filter_alt_outlined,
-              onTap: () => setState(() {
-                _showFilters = !_showFilters;
-              }),
-            ),
-            _headerBtn(
-              label: loc.refreshList,
-              icon: Icons.sync,
-              onTap: _refreshAppointmentsPage,
-            ),
-          ]),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerBtn(
-      {required String label,
-      required IconData icon,
-      bool filled = false,
-      required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: filled ? Colors.white : Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(_T.r10),
-          border: Border.all(
-              color: filled
-                  ? Colors.transparent
-                  : Colors.white.withValues(alpha: 0.3)),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        StudioPageIntro(loc.appointmentSubtitle),
+        LayoutBuilder(builder: (_, constraints) {
+          final narrow = MediaQuery.textScalerOf(context).scale(14) > 21;
+          final stats = [
+            _statChip(loc.today, '$todayCount', Icons.today_outlined),
+            _statChip(loc.appointmentsInView, '${_appointments.length}',
+                Icons.event_note_outlined),
+          ];
+          return narrow
+              ? Column(
+                  children: [stats[0], const SizedBox(height: 10), stats[1]])
+              : Row(children: [
+                  Expanded(child: stats[0]),
+                  const SizedBox(width: 12),
+                  Expanded(child: stats[1])
+                ]);
+        }),
+        const SizedBox(height: 18),
+        _primaryBtn(
+          label: loc.quickAppointment,
+          icon: Icons.add_rounded,
+          onTap: _openBooking,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: filled ? _T.primary : Colors.white),
-            const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: filled ? _T.primary : Colors.white)),
-          ],
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => setState(() => _showFilters = !_showFilters),
+          icon: const Icon(Icons.tune_rounded, size: 18),
+          label: Text(loc.showFilter),
         ),
-      ),
+        if (_activeFilters.isNotEmpty && !_showFilters)
+          TextButton.icon(
+              onPressed: _clearFilters,
+              icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
+              label: Text(loc.appointmentsClear)),
+      ]),
     );
   }
 
   Widget _iconBtn(IconData icon,
-      {required VoidCallback onTap, bool light = false}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: light ? Colors.white.withValues(alpha: 0.15) : _T.surfaceAlt,
-          borderRadius: BorderRadius.circular(_T.r8),
-          border: Border.all(
-              color: light ? Colors.white.withValues(alpha: 0.25) : _T.border),
-        ),
-        child:
-            Icon(icon, size: 18, color: light ? Colors.white : _T.inkSecondary),
-      ),
-    );
-  }
+          {required VoidCallback onTap, bool light = false}) =>
+      IconButton(
+        onPressed: onTap,
+        icon:
+            Icon(icon, color: light ? Colors.white : _T.inkSecondary, size: 20),
+        style: IconButton.styleFrom(
+            backgroundColor:
+                light ? Colors.white.withValues(alpha: .1) : _T.surfaceAlt,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12))),
+      );
 
-  // ── Appointment card ───────────────────────
   Widget _buildAppointmentCard(Map<String, dynamic> appt) {
     final customer = appt['customer'] is Map ? appt['customer'] : null;
     final status =
@@ -1576,117 +1034,112 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     final phone =
         (customer?['phone'] ?? customer?['formatted_phone'] ?? appt['phone'])
             ?.toString();
-    final notes = (appt['notes'] ?? '').toString();
-
+    final notes = (appt['notes'] ?? appt['note'] ?? '').toString();
+    void details() => showAppointmentDetails(context, appt,
+        statusLabel: statusName,
+        onEdit: () => _showEditSheet(appt),
+        onRebook: () => _showRebookSheet(appt));
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-          color: _T.surface,
-          borderRadius: BorderRadius.circular(_T.r14),
-          border: Border.all(color: _T.border),
-          boxShadow: _T.shadow1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _T.border)),
       child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(_T.r14),
-          onTap: () => _showEditSheet(appt),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Avatar with status color accent
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(_T.r10),
-                      ),
-                      child: Icon(Icons.person_outline,
-                          color: statusColor, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(name,
-                              style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: _T.ink)),
-                          if (statusName.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            _statusBadge(statusName, statusColor),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        alignment: WrapAlignment.end,
-                        children: [
-                          _cardActionBtn(
-                              Icons.person_search_outlined,
-                              _T.primary,
-                              loc.appointmentsCustomerPreviewTooltip,
-                              () => _showCustomerInfo(appt)),
-                          _cardActionBtn(
-                              Icons.event_repeat_outlined,
-                              const Color(0xFF7C3AED),
-                              loc.appointmentsRebookTooltip,
-                              () => _showRebookSheet(appt)),
-                          _cardActionBtn(
-                              Icons.edit_outlined,
-                              _T.inkSecondary,
-                              loc.appointmentsEditTooltip,
-                              () => _showEditSheet(appt)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                      color: _T.surfaceAlt,
-                      borderRadius: BorderRadius.circular(_T.r8)),
-                  child: Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: details,
+            child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _metaItem(Icons.calendar_today_outlined,
-                          _formatDate(appt['date'])),
-                      _metaItem(Icons.access_time_outlined,
-                          _formatTime(appt['time'])),
-                      if (phone != null && phone.isNotEmpty) ...[
-                        _metaItem(Icons.phone_outlined, phone),
-                      ],
-                    ],
-                  ),
-                ),
-                if (notes.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(notes,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 13, color: _T.inkSecondary, height: 1.4)),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                                width: 76,
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(_formatTime(appt['time']),
+                                          style: const TextStyle(
+                                              color: _T.primary,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w800)),
+                                      const SizedBox(height: 4),
+                                      Text(_formatDate(appt['date']),
+                                          style: const TextStyle(
+                                              color: _T.inkSecondary,
+                                              fontSize: 11)),
+                                    ])),
+                            const SizedBox(width: 10),
+                            Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                  Text(name,
+                                      style: const TextStyle(
+                                          color: _T.ink,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700)),
+                                  if (phone != null && phone.isNotEmpty)
+                                    Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(phone,
+                                            style: const TextStyle(
+                                                fontSize: 11,
+                                                color: _T.inkSecondary))),
+                                  if (notes.isNotEmpty)
+                                    Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(notes,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                color: _T.inkSecondary,
+                                                fontSize: 11))),
+                                ])),
+                          ]),
+                      const SizedBox(height: 6),
+                      Row(children: [
+                        Expanded(
+                            child: statusName.isNotEmpty
+                                ? Align(
+                                    alignment: Alignment.centerLeft,
+                                    child:
+                                        _statusBadge(statusName, statusColor))
+                                : const SizedBox.shrink()),
+                        IconButton(
+                            tooltip: loc.appointmentsCustomerPreviewTooltip,
+                            onPressed: () => _showCustomerInfo(appt),
+                            icon: const Icon(Icons.person_search_outlined,
+                                size: 19)),
+                        IconButton(
+                            tooltip: loc.appointmentsRebookTooltip,
+                            onPressed: () => _showRebookSheet(appt),
+                            icon: const Icon(Icons.event_repeat_rounded,
+                                size: 19)),
+                        IconButton(
+                            tooltip: loc.appointmentsEditTooltip,
+                            onPressed: () => _showEditSheet(appt),
+                            icon: const Icon(Icons.edit_outlined, size: 19)),
+                        Builder(
+                            builder: (source) => IconButton(
+                                tooltip: loc.appointmentShare,
+                                onPressed: appointmentShareUrl(appt) == null
+                                    ? null
+                                    : () => shareAppointment(source, appt),
+                                icon: const Icon(Icons.share_outlined,
+                                    size: 19))),
+                      ]),
+                    ])),
+          )),
     );
   }
 
@@ -1712,30 +1165,13 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
       children: [
         Icon(icon, size: 13, color: _T.inkSecondary),
         const SizedBox(width: 4),
-        Text(text,
-            style: const TextStyle(
-                fontSize: 12,
-                color: _T.inkSecondary,
-                fontWeight: FontWeight.w500)),
+        Flexible(
+            child: Text(text,
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: _T.inkSecondary,
+                    fontWeight: FontWeight.w500))),
       ],
-    );
-  }
-
-  Widget _cardActionBtn(
-      IconData icon, Color color, String tooltip, VoidCallback onTap) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(_T.r8),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(_T.r8)),
-          child: Icon(icon, size: 16, color: color),
-        ),
-      ),
     );
   }
 
@@ -1827,7 +1263,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints())
             ]),
-        Row(children: [
+        _responsiveRow([
           Expanded(
               child: TextField(
                   controller: _filterNameCtrl,
@@ -1849,7 +1285,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                 label: loc.appointmentsFieldPhone,
                 prefix: const Icon(Icons.phone_outlined, size: 18))),
         const SizedBox(height: 10),
-        Row(children: [
+        _responsiveRow([
           Expanded(
               child: TextField(
             controller: _filterDateFromCtrl,
@@ -1859,7 +1295,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                 hint: loc.calendarDateHint,
                 prefix: const Icon(Icons.calendar_today_outlined, size: 17)),
             onTap: () async {
-              final today = DateTime.now();
+              final today = UserTimeZone.now();
               final min = DateTime(today.year - 1, 1, 1);
               final max = DateTime(today.year + 5, 12, 31);
               final p = await showDatePicker(
@@ -1884,7 +1320,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                 hint: loc.calendarDateHint,
                 prefix: const Icon(Icons.calendar_today_outlined, size: 17)),
             onTap: () async {
-              final today = DateTime.now();
+              final today = UserTimeZone.now();
               final min = DateTime(today.year - 1, 1, 1);
               final max = DateTime(today.year + 5, 12, 31);
               final p = await showDatePicker(
@@ -1901,7 +1337,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           )),
         ]),
         const SizedBox(height: 10),
-        Row(children: [
+        _responsiveRow([
           Expanded(
               child: DropdownButtonFormField<String>(
             initialValue: _filterTimeFromCtrl.text.isNotEmpty
@@ -1937,7 +1373,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           )),
         ]),
         const SizedBox(height: 16),
-        Row(children: [
+        _responsiveRow([
           Expanded(
               child: _primaryBtn(
                   label: loc.showFilter,
@@ -1951,281 +1387,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   }
 
   // ── Quick appointment form ─────────────────
-  Widget _buildQuickForm() {
-    if (!_hasUserPack) {
-      return _card(
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeader(
-            loc.quickAppointmentTitle,
-            icon: Icons.add_circle_outline,
-            trailing: [
-              TextButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => buildPackPageForPlatform()),
-                ),
-                child: Text(loc.appointmentsBuyPackage),
-              ),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-                color: _T.warningSoft,
-                borderRadius: BorderRadius.circular(_T.r8),
-                border: Border.all(color: _T.warning.withValues(alpha: 0.3))),
-            child: Row(children: [
-              const Icon(Icons.info_outline, color: _T.warning, size: 16),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: Text(loc.appointmentsPackageRequired,
-                      style: const TextStyle(fontSize: 13, color: _T.ink))),
-            ]),
-          ),
-        ],
-      ));
-    }
-    if (!_showQuickForm) return const SizedBox.shrink();
-
-    return _card(
-        child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(loc.quickAppointmentTitle,
-            subtitle: loc.quickAppointmentSubtitle,
-            icon: Icons.add_circle_outline,
-            trailing: [
-              IconButton(
-                  icon: const Icon(Icons.close, size: 18),
-                  onPressed: () => setState(() {
-                        _showQuickForm = false;
-                      }),
-                  color: _T.inkSecondary,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints())
-            ]),
-
-        // Customer info group
-        _groupLabel(loc.customerInfo),
-        const SizedBox(height: 8),
-        Row(children: [
-          Expanded(
-              child: TextField(
-                  controller: _quickNameCtrl,
-                  decoration: _fieldDecor(
-                      label: loc.appointmentsFieldName,
-                      hint: loc.appointmentsFieldNameHint))),
-          const SizedBox(width: 10),
-          Expanded(
-              child: TextField(
-                  controller: _quickLastNameCtrl,
-                  decoration: _fieldDecor(
-                      label: loc.appointmentsFieldLastName,
-                      hint: loc.appointmentsFieldLastNameHint))),
-        ]),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<int>(
-          initialValue: _selectedCountryId,
-          isExpanded: true,
-          decoration: _fieldDecor(
-              label: loc.appointmentsCountry,
-              hint: _loadingCountries
-                  ? loc.calendarLoading
-                  : loc.appointmentsSelectCountry,
-              error: _countriesError),
-          items: _countries
-              .map((c) => DropdownMenuItem<int>(
-                  value: c['id'] as int?,
-                  child: Text('${c['name'] ?? ''} (${c['phone_code'] ?? ''})',
-                      style: const TextStyle(fontSize: 13))))
-              .toList(),
-          onChanged: _loadingCountries
-              ? null
-              : (v) => setState(() {
-                    _selectedCountryId = v;
-                    _quickCountryIdCtrl.text = v != null ? '$v' : '';
-                    _countriesError = null;
-                  }),
-        ),
-        const SizedBox(height: 10),
-        Row(children: [
-          Expanded(
-              child: TextField(
-            controller: _quickPhoneCtrl,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[\d()\s]')),
-              _phoneMaskFormatter
-            ],
-            decoration: _fieldDecor(
-                label: loc.appointmentsFieldPhone,
-                hint: loc.appointmentsFieldPhoneHint,
-                prefix: const Icon(Icons.phone_outlined, size: 17)),
-          )),
-          const SizedBox(width: 10),
-          Expanded(
-              child: TextField(
-            controller: _quickEmailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            decoration: _fieldDecor(
-                label: loc.emailLabel,
-                hint: loc.appointmentsFieldEmailHint,
-                prefix: const Icon(Icons.email_outlined, size: 17)),
-          )),
-        ]),
-        const SizedBox(height: 18),
-
-        // Appointment info group
-        _groupLabel(loc.appointmentInfo),
-        const SizedBox(height: 8),
-        Row(children: [
-          Expanded(
-              child: TextField(
-            controller: _quickDateCtrl,
-            readOnly: true,
-            decoration: _fieldDecor(
-                label: loc.date,
-                hint: loc.calendarDateHint,
-                prefix: const Icon(Icons.calendar_today_outlined, size: 17)),
-            onTap: _pickQuickDate,
-          )),
-          const SizedBox(width: 10),
-          Expanded(
-              child: TextField(
-            controller: _quickTimeCtrl,
-            readOnly: true,
-            decoration: _fieldDecor(
-                label: loc.timeSelect,
-                hint: loc.calendarTimeSlotHint,
-                prefix: const Icon(Icons.access_time_outlined, size: 17)),
-          )),
-        ]),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: _outlineBtn(
-              label: loc.getAvailableTimes,
-              icon: Icons.schedule_outlined,
-              onTap: _loadingSlots ? null : _fetchTimeSlots,
-              loading: _loadingSlots),
-        ),
-        if (_slotsError != null) ...[
-          const SizedBox(height: 8),
-          _inlineError(_slotsError!),
-        ],
-        if (_loadingSlots) ...[
-          const SizedBox(height: 8),
-          const LinearProgressIndicator(
-              color: _T.primary, backgroundColor: _T.primarySoft, minHeight: 2),
-        ],
-        if (_slotsRequested &&
-            !_loadingSlots &&
-            _slotsError == null &&
-            _timeSlots.isEmpty) ...[
-          const SizedBox(height: 8),
-          _buildWorkingPrefCallout(),
-        ],
-        if (_timeSlots.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          _buildTimeSlotGrid(
-              _timeSlots,
-              _selectedSlotTime,
-              (t) => setState(() {
-                    _selectedSlotTime = t;
-                    _quickTimeCtrl.text = t;
-                    _slotsError = null;
-                  })),
-        ],
-        const SizedBox(height: 10),
-        TextField(
-          controller: _quickNoteCtrl,
-          maxLines: 2,
-          decoration: _fieldDecor(label: loc.note, hint: '...'),
-        ),
-        const SizedBox(height: 6),
-        _minimalToggle(
-            label: loc.appointmentsFirstAppointment,
-            value: _quickIsFirstAppointment,
-            onChanged: (v) => setState(() {
-                  _quickIsFirstAppointment = v;
-                })),
-        _minimalToggle(
-            label: loc.doNotSendSms,
-            subtitle: loc.smsOffForAppointment,
-            value: _quickNoSms,
-            onChanged: (v) => setState(() {
-                  _quickNoSms = v;
-                })),
-        _minimalToggle(
-            label: loc.appointmentsReminderDisableTitle,
-            subtitle: loc.reminderOffForAppointment,
-            value: _quickNoReminder,
-            onChanged: (v) => setState(() {
-                  _quickNoReminder = v;
-                })),
-        const SizedBox(height: 10),
-        _buildSmsConsumptionCallout(
-          noSms: _quickNoSms,
-          noReminder: _quickNoReminder,
-        ),
-        const SizedBox(height: 14),
-        _primaryBtn(
-          label: _savingQuick
-              ? loc.appointmentsSubmitting
-              : loc.quickAppointmentTitle,
-          icon: Icons.event_available_outlined,
-          onTap: _savingQuick ? null : _submitQuickAppointment,
-          loading: _savingQuick,
-        ),
-      ],
-    ));
-  }
-
-  // ── Working pref callout ───────────────────
-  Widget _buildWorkingPrefCallout() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
-          borderRadius: BorderRadius.circular(_T.r10),
-          border: Border.all(color: const Color(0xFFBFDBFE))),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline, color: Color(0xFF3B82F6), size: 16),
-          const SizedBox(width: 10),
-          Expanded(
-              child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(loc.calendarWorkingHoursPrompt,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      color: _T.ink,
-                      fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const WorkingPreferencesPage())),
-                child: Text(loc.setWorkingHours,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF2563EB),
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline)),
-              ),
-            ],
-          )),
-        ],
-      ),
-    );
-  }
-
-  // ── Modals ─────────────────────────────────
   void _showEditSheet(Map<String, dynamic> appt) {
     final int? appointmentId = appt['id'] is int
         ? appt['id'] as int
@@ -2247,8 +1408,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     final customerName = (appt['customer']?['name'] ?? '').toString().isNotEmpty
         ? appt['customer']['name'].toString()
         : loc.dashboardCustomerFallback(appt['customer_id']?.toString() ?? '');
-    bool localNoSms = _asBool(appt['no_sms']);
-    bool localNoReminder = _asBool(appt['no_reminder']);
+
     bool localScheduleChanged = false;
     final origFormattedTime = _formatTime(appt['time']);
     List<Map<String, dynamic>> localSlots = [];
@@ -2333,7 +1493,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         }
 
         Future<void> pickDate() async {
-          final today = DateTime.now();
+          final today = UserTimeZone.now();
           final min = DateTime(today.year, today.month, today.day);
           final max = DateTime(today.year + 5, 12, 31);
           final p = await showDatePicker(
@@ -2373,9 +1533,10 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                     Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                          Expanded(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                 Text(loc.editAppointment,
                                     style: const TextStyle(
                                         fontSize: 18,
@@ -2386,12 +1547,12 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                 Text(customerName,
                                     style: const TextStyle(
                                         fontSize: 13, color: _T.inkSecondary)),
-                              ]),
+                              ])),
                           _iconBtn(Icons.close,
                               onTap: () => Navigator.of(ctx).pop()),
                         ]),
                     const SizedBox(height: 20),
-                    Row(children: [
+                    _responsiveRow([
                       Expanded(
                           child: TextField(
                               controller: dateCtrl,
@@ -2472,23 +1633,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                         maxLines: 2,
                         decoration: _fieldDecor(label: loc.note, hint: '...')),
                     const SizedBox(height: 6),
-                    _minimalToggle(
-                        label: loc.doNotSendSms,
-                        value: localNoSms,
-                        onChanged: (v) => setModal(() {
-                              localNoSms = v;
-                            })),
-                    _minimalToggle(
-                        label: loc.doNotSendReminder,
-                        value: localNoReminder,
-                        onChanged: (v) => setModal(() {
-                              localNoReminder = v;
-                            })),
                     const SizedBox(height: 10),
-                    _buildSmsConsumptionCallout(
-                      noSms: localNoSms,
-                      noReminder: localNoReminder,
-                    ),
                     const SizedBox(height: 16),
                     _primaryBtn(
                       label: loc.save,
@@ -2508,8 +1653,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                 time:
                                     (localSelectedTime ?? timeCtrl.text).trim(),
                                 notes: notesCtrl.text.trim(),
-                                noSms: localNoSms,
-                                noReminder: localNoReminder,
                                 originalDate: rawDate,
                                 originalTime: origFormattedTime,
                                 includeScheduleFields: localScheduleChanged,
@@ -2619,12 +1762,13 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(loc.customerPreview,
-                            style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: _T.ink,
-                                letterSpacing: -0.3)),
+                        Expanded(
+                            child: Text(loc.customerPreview,
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: _T.ink,
+                                    letterSpacing: -0.3))),
                         _iconBtn(Icons.close,
                             onTap: () => Navigator.of(ctx).pop()),
                       ]),
@@ -2691,12 +1835,12 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                     ),
                     const SizedBox(height: 20),
                     Row(children: [
-                      Text(loc.recentAppointments,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: _T.ink)),
-                      const Spacer(),
+                      Expanded(
+                          child: Text(loc.recentAppointments,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: _T.ink))),
                       const Icon(Icons.history,
                           size: 16, color: _T.inkSecondary),
                     ]),
@@ -2786,8 +1930,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     String? localSlotsError;
     bool localLoadingSlots = false;
     String? localSelectedTime;
-    bool localNoSms = _asBool(appt['no_sms']);
-    bool localNoReminder = _asBool(appt['no_reminder']);
+
     int? localSelectedStatusId = _defaultStatusId();
 
     showModalBottomSheet(
@@ -2862,7 +2005,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         }
 
         Future<void> pickDate() async {
-          final today = DateTime.now();
+          final today = UserTimeZone.now();
           final min = DateTime(today.year, today.month, today.day);
           final max = DateTime(today.year + 5, 12, 31);
           final p = await showDatePicker(
@@ -2918,9 +2061,10 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                     _iconBtn(Icons.close, onTap: () => Navigator.of(ctx).pop()),
                   ]),
                   const SizedBox(height: 22),
-                  _groupLabel('TARİH & SAAT'),
+                  _groupLabel(
+                      AppLocalizations.of(context).appointmentDateTimeHeading),
                   const SizedBox(height: 8),
-                  Row(children: [
+                  _responsiveRow([
                     Expanded(
                         child: TextField(
                             controller: dateCtrl,
@@ -2999,25 +2143,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                       maxLines: 3,
                       decoration: _fieldDecor(label: loc.note, hint: '...')),
                   const SizedBox(height: 8),
-                  _minimalToggle(
-                      label: loc.doNotSendSms,
-                      subtitle: loc.smsOffForAppointment,
-                      value: localNoSms,
-                      onChanged: (v) => setModal(() {
-                            localNoSms = v;
-                          })),
-                  _minimalToggle(
-                      label: loc.doNotSendReminder,
-                      subtitle: loc.reminderOffForAppointment,
-                      value: localNoReminder,
-                      onChanged: (v) => setModal(() {
-                            localNoReminder = v;
-                          })),
                   const SizedBox(height: 10),
-                  _buildSmsConsumptionCallout(
-                    noSms: localNoSms,
-                    noReminder: localNoReminder,
-                  ),
                   const SizedBox(height: 16),
                   _primaryBtn(
                     label: loc.rescheduleAppointment,
@@ -3033,8 +2159,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                 time:
                                     (localSelectedTime ?? timeCtrl.text).trim(),
                                 notes: notesCtrl.text.trim(),
-                                noSms: localNoSms,
-                                noReminder: localNoReminder,
                                 appointmentStatusId: localSelectedStatusId);
                           },
                   ),
@@ -3052,6 +2176,22 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           height: 4,
           decoration: BoxDecoration(
               color: _T.border, borderRadius: BorderRadius.circular(99))));
+
+  Widget _responsiveRow(List<Widget> children) =>
+      LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 340 ||
+            MediaQuery.textScalerOf(context).scale(14) > 20) {
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children.map((child) {
+                if (child is Expanded) return child.child;
+                if (child is SizedBox && child.width != null)
+                  return const SizedBox(height: 12);
+                return child;
+              }).toList());
+        }
+        return Row(children: children);
+      });
 
   Widget _groupLabel(String label) => Text(label,
       style: const TextStyle(
@@ -3074,35 +2214,6 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                   style: const TextStyle(fontSize: 12, color: _T.danger))),
         ]),
       );
-
-  Widget _minimalToggle(
-      {required String label,
-      String? subtitle,
-      required bool value,
-      required ValueChanged<bool> onChanged}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(children: [
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w500, color: _T.ink)),
-          if (subtitle != null)
-            Text(subtitle,
-                style: const TextStyle(fontSize: 11, color: _T.inkSecondary)),
-        ])),
-        Switch.adaptive(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: _T.primary,
-          activeTrackColor: _T.primarySoft,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      ]),
-    );
-  }
 
   Widget _primaryBtn(
       {required String label,
@@ -3136,11 +2247,13 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               else if (icon != null)
                 Icon(icon, size: 17),
               const SizedBox(width: 8),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.1)),
+              Flexible(
+                  child: Text(label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.1))),
             ]),
       ),
     );
@@ -3174,11 +2287,13 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
             else if (icon != null)
               Icon(icon, size: 16, color: _T.inkSecondary),
             const SizedBox(width: 6),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _T.inkSecondary)),
+            Flexible(
+                child: Text(label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _T.inkSecondary))),
           ]),
     );
     return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
@@ -3240,46 +2355,13 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _T.bg,
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: _T.surface,
-        foregroundColor: _T.ink,
-        titleSpacing: 16,
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: _T.primarySoft,
-                borderRadius: BorderRadius.circular(_T.r8)),
-            child: const Icon(Icons.calendar_today_outlined,
-                color: _T.primary, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Text(loc.appointmentsTitle,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                  color: _T.ink,
-                  letterSpacing: -0.2)),
-        ]),
-        bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, color: _T.border)),
-        actions: [
-          if (widget.showBottomNav)
-            IconButton(
-                onPressed: _navigateToDashboard,
-                icon: const Icon(Icons.home_outlined, color: _T.inkSecondary),
-                tooltip: loc.appointmentsHomeTooltip),
-          IconButton(
-              onPressed: _refreshAppointmentsPage,
-              icon: const Icon(Icons.refresh, color: _T.inkSecondary),
-              tooltip: loc.refresh),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: RefreshIndicator(
+      appBar: StudioPageStyle.appBar(
+          title: loc.appointmentsTitle,
+          icon: Icons.event_note_outlined,
+          refreshLabel: loc.refresh,
+          onRefresh: _refreshAppointmentsPage),
+      body: StudioPageBackground(
+          child: RefreshIndicator(
         onRefresh: _refreshAppointmentsPage,
         color: _T.primary,
         child: SingleChildScrollView(
@@ -3288,12 +2370,11 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _buildHeaderHero(),
-            _buildQuickForm(),
             _buildFilterForm(),
             _buildAppointmentList(),
           ]),
         ),
-      ),
+      )),
       bottomNavigationBar: widget.showBottomNav
           ? MainNavBar(currentIndex: 1, onIndexSelected: widget.onTabSelected)
           : null,
