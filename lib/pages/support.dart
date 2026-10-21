@@ -1,508 +1,552 @@
 import 'dart:convert';
-
-import 'package:bagla_mobile/auth.dart';
-import 'package:bagla_mobile/config.dart';
 import 'package:flutter/material.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
-import 'package:bagla_mobile/main_tabs_page.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import '../auth.dart';
+import '../config.dart';
+import '../l10n/app_localizations.dart';
+import '../main_tabs_page.dart';
+import '../user_timezone.dart';
+
+const _blue = Color(0xFF0866EB),
+    _ink = Color(0xFF0C2032),
+    _muted = Color(0xFF627183),
+    _border = Color(0xFFE5EAF1),
+    _background = Color(0xFFFAFBFD);
+const _headers = {
+  'Accept': 'application/json',
+  'Content-Type': 'application/json'
+};
+String _date(BuildContext context, dynamic value) {
+  try {
+    return DateFormat.yMMMd(Localizations.localeOf(context).toString())
+        .add_Hm()
+        .format(UserTimeZone.at(DateTime.parse(value.toString())));
+  } catch (_) {
+    return '';
+  }
+}
+
+String _status(AppLocalizations loc, dynamic status) => switch (status) {
+      'open' => loc.supportStatusOpen,
+      'pending' => loc.supportStatusPending,
+      'in_progress' => loc.supportInProgress,
+      'resolved' => loc.supportResolved,
+      'closed' => loc.supportStatusClosed,
+      _ => loc.supportStatusPending
+    };
+Color _statusColor(dynamic status) => switch (status) {
+      'open' => _blue,
+      'pending' || 'in_progress' => const Color(0xFFAD6A0B),
+      'resolved' => const Color(0xFF008577),
+      _ => _muted
+    };
+String _priority(AppLocalizations loc, dynamic priority) => switch (priority) {
+      'low' => loc.supportPriorityLow,
+      'high' => loc.supportPriorityHigh,
+      'urgent' => loc.supportPriorityUrgent,
+      _ => loc.supportPriorityMedium
+    };
+String _failure(http.Response response, String fallback) {
+  try {
+    final body = jsonDecode(response.body);
+    if (body['errors'] is Map) {
+      for (final value in (body['errors'] as Map).values) {
+        if (value is List && value.isNotEmpty) return value.first.toString();
+      }
+    }
+    return body['message']?.toString() ?? fallback;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+Map<String, dynamic>? _ticketData(http.Response response) {
+  try {
+    final data = jsonDecode(response.body)['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+void _snack(BuildContext context, String message, {bool success = false}) =>
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor:
+            success ? const Color(0xFF008577) : const Color(0xFFCF354D),
+        behavior: SnackBarBehavior.floating));
+InputDecoration _field(String label) => InputDecoration(
+    labelText: label,
+    alignLabelWithHint: true,
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.all(16),
+    border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _border)),
+    enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _border)));
+Widget _badge(AppLocalizations loc, dynamic status) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+        color: _statusColor(status).withValues(alpha: .09),
+        borderRadius: BorderRadius.circular(8)),
+    child: Text(_status(loc, status),
+        style: TextStyle(
+            color: _statusColor(status),
+            fontSize: 12,
+            fontWeight: FontWeight.w600)));
 
 class SupportPage extends StatefulWidget {
   const SupportPage({super.key});
-
   @override
   State<SupportPage> createState() => _SupportPageState();
 }
 
 class _SupportPageState extends State<SupportPage> {
   AppLocalizations get loc => AppLocalizations.of(context);
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _messageController = TextEditingController();
-  static const Color _backgroundColor = Color(0xFFF7F9FC);
-  static const Color _primaryColor = Color(0xFF6366F1);
-
   List<Map<String, dynamic>> _tickets = [];
-  bool _loading = true;
-  bool _creating = false;
+  bool _loading = true, _creating = false;
   String? _error;
-
-  void _goHome() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const MainTabsPage(initialIndex: 0),
-      ),
-      (_) => false,
-    );
-  }
-
-  void _goBack() {
-    final navigator = Navigator.of(context);
-    if (navigator.canPop()) {
-      navigator.pop();
-      return;
-    }
-    _goHome();
-  }
-
+  String _filter = 'all';
+  int _request = 0;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchTickets();
+      if (mounted) _fetchTickets();
     });
   }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  Future<String?> _getToken() async {
-    return getAccessToken();
+  void _back() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => const MainTabsPage(initialIndex: 0)));
+    }
   }
 
   Future<void> _fetchTickets() async {
+    if (!mounted) return;
+    final version = ++_request;
     setState(() {
       _loading = true;
       _error = null;
     });
-
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _loading = false;
-        _error = loc.supportSessionMissing;
-      });
-      return;
-    }
-
     try {
       final response = await authGet(
-        Uri.parse('$apiBaseUrl/api/support/tickets'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final data = decoded['data'] ?? decoded;
-        if (!mounted) return;
+          Uri.parse('$apiBaseUrl/api/support/tickets'),
+          headers: _headers);
+      if (response.statusCode != 200) throw Exception();
+      final data = jsonDecode(response.body)['data'];
+      if (data is! List) throw const FormatException();
+      if (mounted && version == _request) {
         setState(() {
-          _tickets = data is List
-              ? List<Map<String, dynamic>>.from(
-                  data.map((e) => Map<String, dynamic>.from(e)))
-              : <Map<String, dynamic>>[];
-          _loading = false;
-        });
-      } else {
-        setState(() {
-          _error = loc.supportFetchFailedStatus(response.statusCode);
+          _tickets = data
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList();
           _loading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = loc.supportFetchFailed(e.toString());
-        _loading = false;
-      });
+    } catch (_) {
+      if (mounted && version == _request) {
+        setState(() {
+          _error = loc.supportLoadError;
+          _loading = false;
+        });
+      }
     }
   }
 
-  Future<void> _createTicket() async {
+  Future<void> _newTicket() async {
     if (_creating) return;
-    final title = _titleController.text.trim();
-    final message = _messageController.text.trim();
-
-    if (title.isEmpty || message.isEmpty) {
-      _showSnack(loc.supportCreateValidation);
-      return;
+    _creating = true;
+    final created = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: _background,
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .94),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (_) => const _NewTicketSheet());
+    _creating = false;
+    if (created == true && mounted) {
+      setState(() => _filter = 'all');
+      _snack(context, loc.supportCreateSuccess, success: true);
+      await _fetchTickets();
     }
+  }
 
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      _showSnack(loc.supportSessionMissing);
-      return;
-    }
+  void _openTicket(Map<String, dynamic> ticket) {
+    final id = int.tryParse(ticket['id'].toString());
+    if (id == null) return;
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) =>
+            _TicketDetailSheet(ticketId: id, onUpdated: _fetchTickets));
+  }
 
+  Widget _message(String message, {bool retry = false}) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+      child: Column(children: [
+        Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+                color: const Color(0xFFEAF1FF),
+                borderRadius: BorderRadius.circular(20)),
+            child: Icon(retry ? Icons.cloud_off_outlined : Icons.forum_outlined,
+                color: _blue, size: 34)),
+        const SizedBox(height: 16),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: _muted, height: 1.5)),
+        if (retry) ...[
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+              onPressed: _fetchTickets,
+              icon: const Icon(Icons.refresh),
+              label: Text(loc.supportRetry))
+        ]
+      ]));
+  Widget _card(Map<String, dynamic> ticket) => Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: _border)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+          key: ValueKey('ticket-${ticket['id']}'),
+          onTap: () => _openTicket(ticket),
+          child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                  color: const Color(0xFFEAF1FF),
+                                  borderRadius: BorderRadius.circular(12)),
+                              child: const Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  color: _blue,
+                                  size: 20)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                Text(
+                                    ticket['title']?.toString() ??
+                                        loc.supportTicketDetail,
+                                    style: const TextStyle(
+                                        color: _ink,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                Text('#${ticket['id']}',
+                                    style: const TextStyle(
+                                        color: _muted, fontSize: 12))
+                              ])),
+                          const Icon(Icons.chevron_right_rounded, color: _muted)
+                        ]),
+                    const SizedBox(height: 14),
+                    Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _badge(loc, ticket['status']),
+                          Text(_priority(loc, ticket['priority']),
+                              style:
+                                  const TextStyle(color: _muted, fontSize: 12))
+                        ]),
+                    const SizedBox(height: 12),
+                    Text(
+                        loc.supportMessagesMeta(
+                            (ticket['message_count'] ?? 0).toString(),
+                            _date(context,
+                                ticket['updated_at'] ?? ticket['created_at'])),
+                        style: const TextStyle(
+                            color: _muted, fontSize: 12, height: 1.5)),
+                  ]))));
+  @override
+  Widget build(BuildContext context) {
+    final visible = _tickets.where((ticket) {
+      final finished =
+          ticket['status'] == 'closed' || ticket['status'] == 'resolved';
+      return _filter == 'all' || (_filter == 'active' ? !finished : finished);
+    }).toList();
+    return Scaffold(
+        backgroundColor: _background,
+        appBar: AppBar(
+            backgroundColor: _background,
+            foregroundColor: _ink,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            leading: IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: _back,
+                icon: const Icon(Icons.arrow_back_rounded)),
+            title: Text(loc.supportTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            actions: [
+              IconButton(
+                  onPressed: _fetchTickets,
+                  tooltip: loc.supportRefresh,
+                  icon: const Icon(Icons.refresh_rounded))
+            ]),
+        body: SafeArea(
+            child: RefreshIndicator(
+                onRefresh: _fetchTickets,
+                color: _blue,
+                child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                          sliver: SliverToBoxAdapter(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                Text(loc.supportTitle,
+                                    style: const TextStyle(
+                                        color: _ink,
+                                        fontSize: 30,
+                                        height: 1.15,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -1)),
+                                const SizedBox(height: 9),
+                                Text(loc.supportSubtitle,
+                                    style: const TextStyle(
+                                        color: _muted,
+                                        fontSize: 14,
+                                        height: 1.5)),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton.icon(
+                                        onPressed: _newTicket,
+                                        icon: const Icon(Icons.add_rounded,
+                                            size: 20),
+                                        label: Text(loc.supportNewTicket),
+                                        style: FilledButton.styleFrom(
+                                            backgroundColor: _blue,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 15),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        14))))),
+                                const SizedBox(height: 20),
+                                Wrap(spacing: 8, runSpacing: 8, children: [
+                                  for (final entry in {
+                                    'all': loc.contactsAll,
+                                    'active': loc.supportActive,
+                                    'finished': loc.supportFinished
+                                  }.entries)
+                                    ChoiceChip(
+                                        label: Text(entry.value),
+                                        selected: _filter == entry.key,
+                                        onSelected: (_) =>
+                                            setState(() => _filter = entry.key),
+                                        selectedColor: const Color(0xFFEAF1FF),
+                                        labelStyle: TextStyle(
+                                            color: _filter == entry.key
+                                                ? _blue
+                                                : _muted,
+                                            fontWeight: FontWeight.w600),
+                                        side: const BorderSide(color: _border),
+                                        showCheckmark: false)
+                                ]),
+                              ]))),
+                      if (_loading)
+                        const SliverToBoxAdapter(
+                            child: Padding(
+                                padding: EdgeInsets.all(40),
+                                child: Center(
+                                    child: CircularProgressIndicator(
+                                        color: _blue))))
+                      else if (_error != null)
+                        SliverToBoxAdapter(
+                            child: _message(_error!, retry: true))
+                      else if (visible.isEmpty)
+                        SliverToBoxAdapter(
+                            child: _message(_tickets.isEmpty
+                                ? loc.supportEmpty
+                                : loc.supportFilterEmpty))
+                      else
+                        SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            sliver: SliverList.separated(
+                                itemCount: visible.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (_, i) => _card(visible[i]))),
+                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                    ]))));
+  }
+}
+
+class _NewTicketSheet extends StatefulWidget {
+  const _NewTicketSheet();
+  @override
+  State<_NewTicketSheet> createState() => _NewTicketSheetState();
+}
+
+class _NewTicketSheetState extends State<_NewTicketSheet> {
+  final _title = TextEditingController(), _message = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  bool _saving = false;
+  String? _error;
+  AppLocalizations get loc => AppLocalizations.of(context);
+  @override
+  void dispose() {
+    _title.dispose();
+    _message.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    if (_saving || !_form.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
     setState(() {
-      _creating = true;
+      _saving = true;
+      _error = null;
     });
-
     try {
       final response = await authPost(
-        Uri.parse('$apiBaseUrl/api/support/tickets'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'title': title,
-          'message': message,
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _showSnack(loc.supportCreateSuccess, success: true);
-        _titleController.clear();
-        _messageController.clear();
-        await _fetchTickets();
+          Uri.parse('$apiBaseUrl/api/support/tickets'),
+          headers: _headers,
+          body: jsonEncode(
+              {'title': _title.text.trim(), 'message': _message.text.trim()}));
+      if (!mounted) return;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        setState(() => _saving = false);
+        Navigator.of(context).pop(true);
       } else {
-        String message =
-            loc.supportCreateFailedStatus(response.statusCode);
-        try {
-          final decoded = jsonDecode(response.body);
-          message = decoded['message']?.toString() ?? message;
-        } catch (_) {}
-        _showSnack(message);
+        setState(() => _error = _failure(response, loc.supportSendError));
       }
-    } catch (e) {
-      _showSnack(loc.supportCreateFailed(e.toString()));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _creating = false;
-        });
-      }
-    }
-  }
-
-  void _showSnack(String message, {bool success = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: success ? Colors.green : Colors.red,
-      ),
-    );
-  }
-
-  Widget _sectionCard({
-    required Widget child,
-    String? title,
-    String? subtitle,
-    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      padding: padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null)
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          if (subtitle != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 10),
-              child: Text(
-                subtitle,
-                style: const TextStyle(color: Colors.black54),
-              ),
-            )
-          else if (title != null)
-            const SizedBox(height: 10),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Color _statusColor(String? status) {
-    switch (status) {
-      case 'open':
-        return Colors.green;
-      case 'pending':
-        return Colors.orange;
-      case 'closed':
-        return Colors.red;
-      default:
-        return Colors.blueGrey;
-    }
-  }
-
-  String _statusLabel(String? status) {
-    switch (status) {
-      case 'open':
-        return loc.supportStatusOpen;
-      case 'pending':
-        return loc.supportStatusPending;
-      case 'closed':
-        return loc.supportStatusClosed;
-      default:
-        return status ?? '';
-    }
-  }
-
-  String _formatDate(String? isoString) {
-    if (isoString == null) return '';
-    try {
-      final dt = DateTime.parse(isoString).toLocal();
-      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } catch (_) {
-      return isoString;
+      if (mounted) setState(() => _error = loc.supportSendError);
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-  }
-
-  void _openTicketDetail(int id) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return _TicketDetailSheet(
-          ticketId: id,
-          tokenGetter: _getToken,
-          onUpdated: _fetchTickets,
-          statusColor: _statusColor,
-        );
-      },
-    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _backgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: _goBack,
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: Text(
-          loc.supportTitle,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          IconButton(
-            tooltip: loc.dashboardHome,
-            onPressed: _goHome,
-            icon: const Icon(Icons.home_outlined),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _fetchTickets,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            _buildCreateCard(),
-            const SizedBox(height: 16),
-            if (_loading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_error != null)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: _fetchTickets,
-                      icon: const Icon(Icons.refresh),
-                      label: Text(loc.supportRetry),
-                    ),
-                  ],
-                ),
-              )
-            else if (_tickets.isEmpty)
-              _sectionCard(
-                title: loc.supportEmpty,
-                child: const SizedBox.shrink(),
-              )
-            else
-              ..._tickets.map(
-                (ticket) => Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: ListTile(
-                    onTap: () => _openTicketDetail(ticket['id'] as int),
-                    title: Text(
-                      ticket['title']?.toString() ??
-                          loc.smsTemplatesFallbackTitle(
-                              ticket['id']?.toString() ?? ''),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
+  Widget build(BuildContext context) => PopScope(
+      canPop: !_saving,
+      child: Padding(
+          padding: EdgeInsets.fromLTRB(
+              20, 16, 20, MediaQuery.viewInsetsOf(context).bottom + 24),
+          child: SingleChildScrollView(
+              child: Form(
+                  key: _form,
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 4, horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: _statusColor(
-                                        ticket['status']?.toString())
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                ticket['status_label']?.toString() ??
-                                    _statusLabel(
-                                        ticket['status']?.toString()),
-                                style: TextStyle(
-                                  color: _statusColor(
-                                      ticket['status']?.toString()),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              ticket['priority']?.toString().toUpperCase() ??
-                                  '',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          loc.supportMessagesMeta(
-                              (ticket['message_count'] ?? 0).toString(),
-                              _formatDate(
-                                  ticket['created_at']?.toString())),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateCard() {
-    return _sectionCard(
-      title: loc.supportNewTicket,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: loc.supportTitleLabel,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _messageController,
-            minLines: 3,
-            maxLines: 4,
-            decoration: InputDecoration(
-              labelText: loc.supportMessageLabel,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _creating ? null : _createTicket,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryColor,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: _creating
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send),
-              label: Text(
-                  _creating ? loc.supportSending : loc.supportSend),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                        Center(
+                            child: Container(
+                                width: 36,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                    color: _border,
+                                    borderRadius: BorderRadius.circular(4)))),
+                        const SizedBox(height: 18),
+                        Row(children: [
+                          Expanded(
+                              child: Text(loc.supportNewTicket,
+                                  style: const TextStyle(
+                                      color: _ink,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800))),
+                          IconButton(
+                              tooltip: loc.appointmentsClose,
+                              onPressed: _saving
+                                  ? null
+                                  : () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.close_rounded))
+                        ]),
+                        const SizedBox(height: 8),
+                        Text(loc.supportFormHint,
+                            style: const TextStyle(color: _muted, height: 1.5)),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                            key: const ValueKey('support-title'),
+                            controller: _title,
+                            enabled: !_saving,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: _field(loc.supportTitleLabel),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? loc.supportCreateValidation
+                                    : value.trim().length > 255
+                                        ? loc.linksTextTooLong
+                                        : null),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                            key: const ValueKey('support-message'),
+                            controller: _message,
+                            enabled: !_saving,
+                            minLines: 4,
+                            maxLines: 8,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: _field(loc.supportMessageLabel),
+                            validator: (value) =>
+                                (value?.trim().length ?? 0) < 5
+                                    ? loc.supportMessageTooShort
+                                    : null),
+                        const SizedBox(height: 24),
+                        if (_error != null) ...[
+                          Text(_error!,
+                              style: const TextStyle(color: Color(0xFFCF354D))),
+                          const SizedBox(height: 16)
+                        ],
+                        SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                                onPressed: _saving ? null : _send,
+                                style: FilledButton.styleFrom(
+                                    backgroundColor: _blue,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14))),
+                                icon: _saving
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2))
+                                    : const Icon(Icons.send_outlined, size: 18),
+                                label: Text(_saving
+                                    ? loc.supportSending
+                                    : loc.supportSend)))
+                      ])))));
 }
 
 class _TicketDetailSheet extends StatefulWidget {
   final int ticketId;
-  final Future<String?> Function() tokenGetter;
   final Future<void> Function() onUpdated;
-  final Color Function(String?) statusColor;
-
-  const _TicketDetailSheet({
-    required this.ticketId,
-    required this.tokenGetter,
-    required this.onUpdated,
-    required this.statusColor,
-  });
-
+  const _TicketDetailSheet({required this.ticketId, required this.onUpdated});
   @override
   State<_TicketDetailSheet> createState() => _TicketDetailSheetState();
 }
@@ -510,446 +554,344 @@ class _TicketDetailSheet extends StatefulWidget {
 class _TicketDetailSheetState extends State<_TicketDetailSheet> {
   AppLocalizations get loc => AppLocalizations.of(context);
   Map<String, dynamic>? _ticket;
-  bool _loading = true;
-  bool _replying = false;
-  bool _closing = false;
-  final TextEditingController _replyController = TextEditingController();
-
-  String _statusLabel(String? status) {
-    switch (status) {
-      case 'open':
-        return loc.supportStatusOpen;
-      case 'pending':
-        return loc.supportStatusPending;
-      case 'closed':
-        return loc.supportStatusClosed;
-      default:
-        return status ?? '';
-    }
-  }
-
+  bool _loading = true, _replying = false, _closing = false;
+  String? _error, _replyError;
+  final _reply = TextEditingController();
+  bool get _busy => _replying || _closing;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTicket();
+      if (mounted) _load();
     });
   }
 
   @override
   void dispose() {
-    _replyController.dispose();
+    _reply.dispose();
     super.dispose();
   }
 
-  void _showSnack(String message, {bool success = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: success ? Colors.green : Colors.red,
-      ),
-    );
-  }
-
-  Future<void> _loadTicket() async {
+  Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
+      _error = null;
     });
-
-    final token = await widget.tokenGetter();
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _loading = false;
-      });
-      _showSnack(loc.supportSessionMissing);
-      return;
-    }
-
     try {
       final response = await authGet(
-        Uri.parse('$apiBaseUrl/api/support/tickets/${widget.ticketId}'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final data = decoded['data'] ?? decoded;
-        if (!mounted) return;
-        setState(() {
-          _ticket = Map<String, dynamic>.from(data);
-          _loading = false;
-        });
-      } else {
-        _showSnack(loc.supportFetchFailedStatus(response.statusCode));
-        if (mounted) {
-          setState(() {
-            _loading = false;
-          });
-        }
-      }
-    } catch (e) {
-      _showSnack(loc.supportFetchFailed(e.toString()));
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
+          Uri.parse('$apiBaseUrl/api/support/tickets/${widget.ticketId}'),
+          headers: _headers);
+      final data = _ticketData(response);
+      if (response.statusCode != 200 || data == null) throw Exception();
+      if (mounted) setState(() => _ticket = data);
+    } catch (_) {
+      if (mounted) setState(() => _error = loc.supportLoadError);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  Future<void> _sendReply() async {
-    if (_replying) return;
-    final message = _replyController.text.trim();
-    if (message.isEmpty) {
-      _showSnack(loc.supportReplyEmpty);
+  Future<void> _send() async {
+    if (_busy || _ticket?['status'] == 'closed') return;
+    if (_reply.text.trim().length < 2) {
+      setState(() => _replyError = loc.supportReplyTooShort);
       return;
     }
-
-    final token = await widget.tokenGetter();
-    if (token == null || token.isEmpty) {
-      _showSnack(loc.supportSessionMissing);
-      return;
-    }
-
+    FocusScope.of(context).unfocus();
     setState(() {
       _replying = true;
+      _replyError = null;
     });
-
     try {
       final response = await authPost(
-        Uri.parse(
-            '$apiBaseUrl/api/support/tickets/${widget.ticketId}/reply'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'message': message}),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _replyController.clear();
+          Uri.parse('$apiBaseUrl/api/support/tickets/${widget.ticketId}/reply'),
+          headers: _headers,
+          body: jsonEncode({'message': _reply.text.trim()}));
+      if (!mounted) return;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        _reply.clear();
+        final data = _ticketData(response);
+        if (data != null) {
+          setState(() => _ticket = data);
+        } else {
+          await _load();
+        }
         await widget.onUpdated();
-        await _loadTicket();
-        _showSnack(loc.supportReplySuccess, success: true);
       } else {
-        String msg =
-            loc.supportReplyFailedStatus(response.statusCode);
-        try {
-          final decoded = jsonDecode(response.body);
-          msg = decoded['message']?.toString() ?? msg;
-        } catch (_) {}
-        _showSnack(msg);
+        setState(() => _replyError = _failure(response, loc.supportSendError));
       }
-    } catch (e) {
-      _showSnack(loc.supportReplyFailed(e.toString()));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _replying = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _closeTicket() async {
-    if (_closing) return;
-
-    final token = await widget.tokenGetter();
-    if (token == null || token.isEmpty) {
-      _showSnack(loc.supportSessionMissing);
-      return;
-    }
-
-    setState(() {
-      _closing = true;
-    });
-
-    try {
-      final response = await authPost(
-        Uri.parse(
-            '$apiBaseUrl/api/support/tickets/${widget.ticketId}/close'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        await widget.onUpdated();
-        await _loadTicket();
-        _showSnack(loc.supportCloseSuccess, success: true);
-      } else {
-        _showSnack(loc.supportCloseFailedStatus(response.statusCode));
-      }
-    } catch (e) {
-      _showSnack(loc.supportCloseFailed(e.toString()));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _closing = false;
-        });
-      }
-    }
-  }
-
-  String _formatDate(String? isoString) {
-    if (isoString == null) return '';
-    try {
-      final dt = DateTime.parse(isoString).toLocal();
-      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } catch (_) {
-      return isoString;
+      if (mounted) setState(() => _replyError = loc.supportSendError);
+    } finally {
+      if (mounted) setState(() => _replying = false);
     }
+  }
+
+  Future<void> _close() async {
+    if (_busy) return;
+    final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+                title: Text(loc.supportCloseTicket),
+                content: Text(loc.supportCloseConfirm),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(loc.customersCancel)),
+                  FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(loc.supportCloseTicket))
+                ]));
+    if (confirmed != true || !mounted || _busy) return;
+    setState(() => _closing = true);
+    try {
+      final response = await authPost(
+          Uri.parse('$apiBaseUrl/api/support/tickets/${widget.ticketId}/close'),
+          headers: _headers);
+      if (!mounted) return;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        setState(() => _ticket =
+            _ticketData(response) ?? {...?_ticket, 'status': 'closed'});
+        await widget.onUpdated();
+      } else {
+        _snack(context, _failure(response, loc.supportCloseError));
+      }
+    } catch (_) {
+      if (mounted) _snack(context, loc.supportCloseError);
+    } finally {
+      if (mounted) setState(() => _closing = false);
+    }
+  }
+
+  Widget _message(Map<String, dynamic> message) {
+    final sender = message['sender'] is Map
+        ? Map<String, dynamic>.from(message['sender'])
+        : <String, dynamic>{};
+    final own = sender['is_owner'] == true;
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Align(
+            alignment: own ? Alignment.centerRight : Alignment.centerLeft,
+            child: FractionallySizedBox(
+                widthFactor: .94,
+                child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                        color: own ? const Color(0xFFEAF1FF) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: own ? const Color(0xFFD4E3FF) : _border)),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              own
+                                  ? loc.supportSenderYou
+                                  : sender['name']?.toString() ??
+                                      loc.supportSenderSupport,
+                              style: TextStyle(
+                                  color: own ? _blue : _ink,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          Text(message['message']?.toString() ?? '',
+                              style: const TextStyle(color: _ink, height: 1.5)),
+                          const SizedBox(height: 10),
+                          Text(_date(context, message['created_at']),
+                              style:
+                                  const TextStyle(color: _muted, fontSize: 11))
+                        ])))));
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.85,
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      loc.supportTicketDetail,
-                      style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _ticket == null
-                    ? Center(child: Text(loc.supportTicketNotFound))
-                        : ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: [
-                              _buildHeader(),
-                            const SizedBox(height: 12),
-                              Text(
-                                loc.supportMessages,
-                                style: const TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              ..._buildMessages(),
-                              const SizedBox(height: 12),
-                            ],
-                          ),
-              ),
-              if (_ticket != null) _buildReplyArea(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _ticket?['title']?.toString() ??
-              loc.smsTemplatesFallbackTitle(
-                  _ticket?['id']?.toString() ?? ''),
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              decoration: BoxDecoration(
-                color: widget.statusColor(_ticket?['status']?.toString())
-                    .withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _ticket?['status_label']?.toString() ??
-                    _statusLabel(_ticket?['status']?.toString()),
-                style: TextStyle(
-                  color: widget.statusColor(_ticket?['status']?.toString()),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-          _ticket?['priority']?.toString().toUpperCase() ?? '',
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-            const Spacer(),
-            if (_ticket?['status']?.toString() != 'closed')
-              TextButton.icon(
-                onPressed: _closing ? null : _closeTicket,
-                icon: _closing
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check_circle_outline),
-                label: Text(
-                    _closing ? loc.supportStatusClosing : loc.supportCloseTicket),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          loc.supportCreatedAt(
-              _formatDate(_ticket?['created_at']?.toString())),
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _buildMessages() {
-    final messages = _ticket?['messages'];
-    if (messages is! List || messages.isEmpty) {
-      return [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(loc.supportNoMessages),
-        ),
-      ];
-    }
-
-    return List<Widget>.generate(messages.length, (index) {
-      final msg = Map<String, dynamic>.from(messages[index]);
-      final sender = msg['sender'] as Map<String, dynamic>?;
-      final isOwner = sender?['is_owner'] == true;
-      return Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: (isOwner ? Colors.blue : Colors.grey.shade300)
-              .withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color:
-                (isOwner ? Colors.blue : Colors.grey.shade500)
-                    .withValues(alpha: 0.3),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment:
-              isOwner ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment:
-                  isOwner ? MainAxisAlignment.end : MainAxisAlignment.start,
-              children: [
-                Text(
-                  sender?['name']?.toString() ??
-                      (isOwner ? loc.supportSenderYou : loc.supportSenderSupport),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: isOwner ? Colors.blue : Colors.black87,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatDate(msg['created_at']?.toString()),
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(msg['message']?.toString() ?? ''),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildReplyArea() {
-    final isClosed = _ticket?['status']?.toString() == 'closed';
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _replyController,
-            minLines: 1,
-            maxLines: 4,
-            enabled: !isClosed,
-            decoration: InputDecoration(
-              hintText: isClosed
-                  ? loc.supportReplyClosed
-                  : loc.supportReplyPlaceholder,
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: isClosed || _replying ? null : _sendReply,
-                  icon: _replying
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send),
-                  label: Text(_replying
-                      ? loc.supportReplySending
-                      : loc.supportReplySend),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    final closed = _ticket?['status'] == 'closed';
+    final messages =
+        _ticket?['messages'] is List ? _ticket!['messages'] as List : [];
+    return PopScope(
+        canPop: !_busy,
+        child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: FractionallySizedBox(
+                heightFactor: .94,
+                child: Material(
+                    color: _background,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
+                    clipBehavior: Clip.antiAlias,
+                    child: SafeArea(
+                        top: false,
+                        child: Column(children: [
+                          Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+                              child: Row(children: [
+                                Expanded(
+                                    child: Text(loc.supportTicketDetail,
+                                        style: const TextStyle(
+                                            color: _ink,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w800))),
+                                IconButton(
+                                    tooltip: loc.appointmentsClose,
+                                    onPressed: _busy
+                                        ? null
+                                        : () => Navigator.of(context).pop(),
+                                    icon: const Icon(Icons.close_rounded,
+                                        color: _muted))
+                              ])),
+                          Expanded(
+                              child: _loading
+                                  ? const Center(
+                                      child: CircularProgressIndicator(
+                                          color: _blue))
+                                  : _error != null
+                                      ? SingleChildScrollView(
+                                          padding: const EdgeInsets.all(20),
+                                          child: Column(children: [
+                                            Text(_error!,
+                                                textAlign: TextAlign.center),
+                                            const SizedBox(height: 16),
+                                            OutlinedButton.icon(
+                                                onPressed: _load,
+                                                icon: const Icon(Icons.refresh),
+                                                label: Text(loc.supportRetry))
+                                          ]))
+                                      : ListView(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              20, 8, 20, 16),
+                                          children: [
+                                              Text(
+                                                  _ticket?['title']
+                                                          ?.toString() ??
+                                                      loc.supportTicketNotFound,
+                                                  style: const TextStyle(
+                                                      color: _ink,
+                                                      fontSize: 22,
+                                                      fontWeight:
+                                                          FontWeight.w700)),
+                                              const SizedBox(height: 12),
+                                              Wrap(
+                                                  spacing: 10,
+                                                  runSpacing: 8,
+                                                  crossAxisAlignment:
+                                                      WrapCrossAlignment.center,
+                                                  children: [
+                                                    _badge(loc,
+                                                        _ticket?['status']),
+                                                    Text('#${widget.ticketId}',
+                                                        style: const TextStyle(
+                                                            color: _muted,
+                                                            fontSize: 12)),
+                                                    if (!closed)
+                                                      TextButton.icon(
+                                                          onPressed: _busy
+                                                              ? null
+                                                              : _close,
+                                                          icon: _closing
+                                                              ? const SizedBox(
+                                                                  width: 16,
+                                                                  height: 16,
+                                                                  child: CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2))
+                                                              : const Icon(
+                                                                  Icons
+                                                                      .check_circle_outline_rounded,
+                                                                  size: 18),
+                                                          label: Text(_closing
+                                                              ? loc
+                                                                  .supportStatusClosing
+                                                              : loc
+                                                                  .supportCloseTicket),
+                                                          style: TextButton
+                                                              .styleFrom(
+                                                                  foregroundColor:
+                                                                      _muted))
+                                                  ]),
+                                              const SizedBox(height: 20),
+                                              if (messages.isEmpty)
+                                                Text(loc.supportNoMessages,
+                                                    style: const TextStyle(
+                                                        color: _muted))
+                                              else
+                                                for (final message in messages)
+                                                  _message(
+                                                      Map<String, dynamic>.from(
+                                                          message as Map)),
+                                            ])),
+                          if (_ticket != null && _error == null)
+                            Container(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                                decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border(
+                                        top: BorderSide(color: _border))),
+                                child: closed
+                                    ? Text(loc.supportReplyClosed,
+                                        style: const TextStyle(
+                                            color: _muted, height: 1.5))
+                                    : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                            if (_replyError != null) ...[
+                                              Text(_replyError!,
+                                                  style: const TextStyle(
+                                                      color:
+                                                          Color(0xFFCF354D))),
+                                              const SizedBox(height: 8)
+                                            ],
+                                            Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Expanded(
+                                                      child: TextField(
+                                                          key: const ValueKey(
+                                                              'support-reply'),
+                                                          controller: _reply,
+                                                          enabled: !_busy,
+                                                          minLines: 1,
+                                                          maxLines: 3,
+                                                          textCapitalization:
+                                                              TextCapitalization
+                                                                  .sentences,
+                                                          decoration: _field(loc
+                                                              .supportReplyPlaceholder))),
+                                                  const SizedBox(width: 10),
+                                                  IconButton.filled(
+                                                      onPressed:
+                                                          _busy ? null : _send,
+                                                      tooltip:
+                                                          loc.supportReplySend,
+                                                      style:
+                                                          IconButton.styleFrom(
+                                                              backgroundColor:
+                                                                  _blue,
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                              minimumSize:
+                                                                  const Size(
+                                                                      48, 48)),
+                                                      icon: _replying
+                                                          ? const SizedBox(
+                                                              width: 18,
+                                                              height: 18,
+                                                              child: CircularProgressIndicator(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  strokeWidth:
+                                                                      2))
+                                                          : const Icon(
+                                                              Icons
+                                                                  .send_outlined,
+                                                              size: 20))
+                                                ])
+                                          ])),
+                        ]))))));
   }
 }

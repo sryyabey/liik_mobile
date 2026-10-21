@@ -50,28 +50,44 @@ class MainNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: currentIndex,
-      onTap: (i) => _onTap(context, i),
-      items: [
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.dashboard_outlined),
-          label: loc.dashboardHome,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.event_note_outlined),
-          label: loc.appointmentsTitle,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.calendar_today_outlined),
-          label: loc.dashboardCalendar,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.groups_outlined),
-          label: loc.customersTitle,
-        ),
-      ],
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFFEAF1FF),
+        labelTextStyle: const WidgetStatePropertyAll(TextStyle(
+            color: Color(0xFF0C2032),
+            fontSize: 11,
+            fontWeight: FontWeight.w600)),
+        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? const Color(0xFF0866EB)
+                : const Color(0xFF7A8798),
+            size: 23)),
+      ),
+      child: NavigationBar(
+        elevation: 0,
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) => _onTap(context, index),
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home_rounded),
+              label: loc.dashboardHome),
+          NavigationDestination(
+              icon: const Icon(Icons.event_note_outlined),
+              selectedIcon: const Icon(Icons.event_note_rounded),
+              label: loc.appointmentsTitle),
+          NavigationDestination(
+              icon: const Icon(Icons.calendar_today_outlined),
+              selectedIcon: const Icon(Icons.calendar_month_rounded),
+              label: loc.dashboardCalendar),
+          NavigationDestination(
+              icon: const Icon(Icons.people_outline_rounded),
+              selectedIcon: const Icon(Icons.people_rounded),
+              label: loc.customersTitle),
+        ],
+      ),
     );
   }
 }
