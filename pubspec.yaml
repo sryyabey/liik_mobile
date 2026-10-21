@@ -1,13 +1,14 @@
 name: bagla_mobile
-description: "bagla.app mobile application"
+description: "Liik bio-link and appointment application"
 publish_to: "none"
 
-version: 2.0.0+29
+version: 2.0.1+32
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
+  timezone: ^0.10.1
   flutter:
     sdk: flutter
   shared_preferences: ^2.2.2
@@ -23,18 +24,19 @@ dependencies:
   share_plus: ^10.0.2
   qr_flutter: ^4.1.0
   image_picker: ^1.1.2
-  image_cropper: ^8.0.2
+  image_cropper: ^12.2.1
   image: ^4.2.0
   cupertino_icons: ^1.0.6
   dio: ^5.4.3+1
   flutter_riverpod: ^2.5.1
   webview_flutter: ^4.7.0
   flutter_html: ^3.0.0
-  in_app_purchase: ^3.2.0
+  in_app_purchase: ^3.3.0
   path_provider: ^2.1.4
   in_app_review: ^2.0.12
 
 dev_dependencies:
+  webview_flutter_platform_interface: ^2.14.0
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.1
@@ -43,15 +45,20 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path_ios: assets/mobile_logo.png
-  image_path_android: assets/mobile_logo.png
-  adaptive_icon_background: "#FFFFFF" # or a custom color/image
-  adaptive_icon_foreground: "assets/icon_foreground.png"
+  image_path_ios: assets/liik_logo.png
+  image_path_android: assets/liik_logo.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/liik_logo.png"
+  adaptive_icon_foreground_inset: 20
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
 
 flutter:
   uses-material-design: true
   generate: true
   assets:
+    - assets/liik_logo.png
+    - assets/liik-logo-2.png
     - assets/logo.png
     - assets/google_icon.png
     - assets/facebook_icon.png
