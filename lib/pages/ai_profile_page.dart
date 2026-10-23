@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bagla_mobile/widgets/theme_tier_badge.dart';
+import 'package:liik_mobile/widgets/theme_tier_badge.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:bagla_mobile/config.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/config.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import '../auth.dart';
 import '../main_tabs_page.dart';
 

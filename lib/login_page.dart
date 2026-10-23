@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -28,8 +28,9 @@ class _LoginPageState extends State<LoginPage> {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: const ['email'],
     // Use the Web client ID here so the backend can verify idToken audience.
-    serverClientId: googleWebServerClientId,
-    // On iOS, the native clientId is read from GoogleService-Info.plist.
+    serverClientId:
+        googleWebServerClientId.isEmpty ? null : googleWebServerClientId,
+    // iOS reads GIDClientID and GIDServerClientID from Info.plist.
   );
   bool _isLoading = false;
   bool _isGoogleLoading = false;
@@ -167,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
         },
         body: jsonEncode({
           'id_token': idToken,
-          'device_name': 'bagla_mobile',
+          'device_name': 'liik_mobile',
         }),
       );
 

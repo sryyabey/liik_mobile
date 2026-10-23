@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local provider configuration
+auth-config.local.json
+# Real Google iOS client IDs belong only in this local file.
+/ios/Flutter/Auth.xcconfig

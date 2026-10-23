@@ -1,19 +1,16 @@
-const apiBaseUrl = 'http://127.0.0.1:8000';
+const apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'https://liik.net',
+);
 // App Store ID (in_app_review için)
-const appleAppStoreId = '6744039002';
+const appleAppStoreId = String.fromEnvironment('APPLE_APP_STORE_ID');
 
 const standardAppleEulaUrl =
     'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
-const privacyPolicyUrl = 'https://bagla.app/contract/22';
+const privacyPolicyUrl = 'https://liik.net/privacy';
 
-// Google Sign-In (Android)
-const googleAndroidPackageName = 'dev.sryya.liik';
-const googleAndroidSha1 =
-    'EF:BC:55:36:81:B0:19:43:A5:F9:36:52:23:8D:EB:E3:9E:4F:AF:92';
-const googleAndroidClientId =
-    '99910465030-vj8m6u9nccv4lt0528bk2c3f3i0vouf5.apps.googleusercontent.com';
+// Web OAuth client used as the ID token audience on Android and iOS.
+// iOS can also read this from GIDServerClientID when archiving in Xcode.
+const googleWebServerClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 
-// Backend ID token doğrulaması için Web OAuth client.
-const googleWebServerClientId =
-    '99910465030-ng2ik9e1hpmbv9dg5530u7jr2e2emrmu.apps.googleusercontent.com';
-
+const appleWebClientId = String.fromEnvironment('APPLE_SERVICE_ID');

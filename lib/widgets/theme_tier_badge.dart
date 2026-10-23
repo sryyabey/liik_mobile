@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 
 /// Older API responses may omit the field or encode booleans as 0/1.
 bool isPremiumTheme(Map<String, dynamic> theme) {

@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
-import 'package:bagla_mobile/widgets/appointment_details.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/widgets/appointment_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';

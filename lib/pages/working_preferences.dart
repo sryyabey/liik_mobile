@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:bagla_mobile/auth.dart';
-import 'package:bagla_mobile/config.dart';
+import 'package:liik_mobile/auth.dart';
+import 'package:liik_mobile/config.dart';
 import 'package:flutter/material.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
-import 'package:bagla_mobile/main_tabs_page.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/main_tabs_page.dart';
 
 class WorkingPreferencesPage extends StatefulWidget {
   const WorkingPreferencesPage({super.key});

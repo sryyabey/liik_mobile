@@ -3,13 +3,13 @@ import 'pages/analytics.dart';
 import 'user_timezone.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
-import 'main.dart' show BaglaAppState;
+import 'main.dart' show LiikAppState;
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -1363,7 +1363,7 @@ class _DashboardPageState extends State<DashboardPage> {
       );
 
   Future<void> _logout() async {
-    final appState = context.findAncestorStateOfType<BaglaAppState>();
+    final appState = context.findAncestorStateOfType<LiikAppState>();
     await clearTokens();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('authToken');

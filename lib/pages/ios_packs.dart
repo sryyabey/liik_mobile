@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bagla_mobile/auth.dart';
-import 'package:bagla_mobile/config.dart';
-import 'package:bagla_mobile/dashboard_page.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
-import 'package:bagla_mobile/login_page.dart';
-import 'package:bagla_mobile/services/apple_subscription_catalog.dart';
+import 'package:liik_mobile/auth.dart';
+import 'package:liik_mobile/config.dart';
+import 'package:liik_mobile/dashboard_page.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/login_page.dart';
+import 'package:liik_mobile/services/apple_subscription_catalog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';

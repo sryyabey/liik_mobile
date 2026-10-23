@@ -4,7 +4,7 @@ import '../dashboard_page.dart';
 import '../pages/appointments.dart';
 import '../pages/calendar.dart';
 import '../pages/customers.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 
 class MainNavBar extends StatelessWidget {
   final int currentIndex;

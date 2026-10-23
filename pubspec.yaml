@@ -1,8 +1,8 @@
-name: bagla_mobile
+name: liik_mobile
 description: "Liik bio-link and appointment application"
 publish_to: "none"
 
-version: 2.0.1+32
+version: 1.0.1+3
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -45,10 +45,10 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path_ios: assets/liik_logo.png
-  image_path_android: assets/liik_logo.png
+  image_path_ios: assets/app_icon.png
+  image_path_android: assets/app_icon.png
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/liik_logo.png"
+  adaptive_icon_foreground: "assets/app_icon.png"
   adaptive_icon_foreground_inset: 20
   remove_alpha_ios: true
   background_color_ios: "#FFFFFF"

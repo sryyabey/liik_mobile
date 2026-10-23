@@ -1,0 +1,4 @@
+storeFile=/absolute/path/to/liik-upload.jks
+storePassword=REPLACE_LOCALLY
+keyAlias=liik-upload
+keyPassword=REPLACE_LOCALLY

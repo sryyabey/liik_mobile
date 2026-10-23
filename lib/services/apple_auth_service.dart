@@ -104,7 +104,8 @@ class AppleAuthService {
             data['access_token'] ??
             (data['data'] != null ? data['data']['token'] : null);
         if (token == null) {
-          throw AppleAuthException.server('Could not retrieve the sign-in token.');
+          throw AppleAuthException.server(
+              'Could not retrieve the sign-in token.');
         }
         final user = data['user'] ??
             (data['data'] != null ? data['data']['user'] : null);
@@ -116,8 +117,7 @@ class AppleAuthService {
 
       if (response.statusCode == 422) {
         final decoded = jsonDecode(response.body);
-        final message =
-            decoded is Map ? decoded['message']?.toString() : null;
+        final message = decoded is Map ? decoded['message']?.toString() : null;
         final errors = decoded is Map ? decoded['errors'] : null;
         throw AppleAuthException.validation(
           message ?? _formatValidationErrors(errors),
@@ -144,8 +144,11 @@ class AppleAuthService {
 
   WebAuthenticationOptions? _webAuthOptionsIfNeeded() {
     if (kIsWeb || defaultTargetPlatform == TargetPlatform.android) {
+      if (appleWebClientId.isEmpty) {
+        throw AppleAuthException.server('APPLE_SERVICE_ID is not configured.');
+      }
       return WebAuthenticationOptions(
-        clientId: 'com.bagla.app.web',
+        clientId: appleWebClientId,
         redirectUri: Uri.parse('$apiBaseUrl/auth/apple/callback'),
       );
     }

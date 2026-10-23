@@ -1,6 +1,6 @@
-import 'package:bagla_mobile/app_locale.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
-import 'package:bagla_mobile/main.dart';
+import 'package:liik_mobile/app_locale.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';

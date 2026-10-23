@@ -15,10 +15,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val flutterVersionCode =
-    project.findProperty("flutter.versionCode")?.toString()?.toIntOrNull() ?: 1
-val flutterVersionName =
-    project.findProperty("flutter.versionName")?.toString() ?: "1.0"
 val appId = project.findProperty("APP_ID")?.toString() ?: "dev.sryya.liik"
 
 
@@ -47,12 +43,12 @@ android {
         applicationId = appId
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode
-        versionName = flutterVersionName
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     signingConfigs {
-        create("release") {
+        if (hasReleaseKeystore) create("release") {
             storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
             storePassword = keystoreProperties["storePassword"] as String
             keyAlias = keystoreProperties["keyAlias"] as String
@@ -65,7 +61,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseKeystore) signingConfigs.getByName("release") else null
         }
     }
 }

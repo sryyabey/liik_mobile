@@ -9,10 +9,10 @@ import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bagla_mobile/config.dart';
+import 'package:liik_mobile/config.dart';
 import '../auth.dart';
 import '../widgets/main_nav.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import '../main.dart';
 import '../app_locale.dart';
 import '../login_page.dart';
@@ -1109,7 +1109,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 alignment: Alignment.centerLeft,
                                 child: LiikLanguagePicker(onChanged: (locale) {
                                   context
-                                      .findAncestorStateOfType<BaglaAppState>()
+                                      .findAncestorStateOfType<LiikAppState>()
                                       ?.setLocale(locale);
                                 }))),
                         const SizedBox(height: 12),

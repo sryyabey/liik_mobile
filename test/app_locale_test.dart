@@ -1,4 +1,4 @@
-import 'package:bagla_mobile/app_locale.dart';
+import 'package:liik_mobile/app_locale.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 

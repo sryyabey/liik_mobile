@@ -1,0 +1,6 @@
+{
+  "API_BASE_URL": "https://YOUR_API_DOMAIN",
+  "GOOGLE_WEB_CLIENT_ID": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+  "APPLE_SERVICE_ID": "YOUR_APPLE_SERVICE_ID",
+  "APPLE_APP_STORE_ID": ""
+}

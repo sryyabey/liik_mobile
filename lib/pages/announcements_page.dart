@@ -1,4 +1,4 @@
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';

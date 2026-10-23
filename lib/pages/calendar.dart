@@ -2,10 +2,10 @@ import '../widgets/studio_page.dart';
 import '../user_timezone.dart';
 import 'dart:convert';
 
-import 'package:bagla_mobile/auth.dart';
-import 'package:bagla_mobile/config.dart';
-import 'package:bagla_mobile/login_page.dart';
-import 'package:bagla_mobile/pages/working_preferences.dart';
+import 'package:liik_mobile/auth.dart';
+import 'package:liik_mobile/config.dart';
+import 'package:liik_mobile/login_page.dart';
+import 'package:liik_mobile/pages/working_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +14,7 @@ import '../utils/appointment_date_utils.dart';
 import '../widgets/main_nav.dart';
 import '../widgets/appointment_booking_flow.dart';
 import '../widgets/appointment_details.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 
 class _ApiEnvelope {
   final int statusCode;

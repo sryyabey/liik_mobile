@@ -1,4 +1,4 @@
-# bagla_mobile
+# Liik Mobile
 
 A new Flutter project.
 

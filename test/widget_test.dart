@@ -9,11 +9,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:bagla_mobile/main.dart';
+import 'package:liik_mobile/main.dart';
 
 void main() {
-  testWidgets('BaglaApp renders without crashing', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: BaglaApp()));
+  testWidgets('LiikApp renders without crashing', (WidgetTester tester) async {
+    await tester.pumpWidget(const ProviderScope(child: LiikApp()));
 
     // Wait for initial async operations (e.g. SharedPreferences token check)
     await tester.pumpAndSettle(const Duration(seconds: 1));

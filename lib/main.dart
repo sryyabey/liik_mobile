@@ -7,24 +7,24 @@ import 'auth.dart';
 import 'user_timezone.dart';
 import 'app_locale.dart';
 import 'login_page.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import 'main_tabs_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await UserTimeZone.load();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  runApp(const ProviderScope(child: BaglaApp()));
+  runApp(const ProviderScope(child: LiikApp()));
 }
 
-class BaglaApp extends StatefulWidget {
-  const BaglaApp({super.key});
+class LiikApp extends StatefulWidget {
+  const LiikApp({super.key});
 
   @override
-  State<BaglaApp> createState() => BaglaAppState();
+  State<LiikApp> createState() => LiikAppState();
 }
 
-class BaglaAppState extends State<BaglaApp> {
+class LiikAppState extends State<LiikApp> {
   Locale? _locale;
   bool _isLoggedIn = false;
 

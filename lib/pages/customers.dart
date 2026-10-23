@@ -4,9 +4,9 @@ import '../app_locale.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bagla_mobile/auth.dart';
-import 'package:bagla_mobile/config.dart';
-import 'package:bagla_mobile/l10n/app_localizations.dart';
+import 'package:liik_mobile/auth.dart';
+import 'package:liik_mobile/config.dart';
+import 'package:liik_mobile/l10n/app_localizations.dart';
 import '../widgets/appointment_booking_flow.dart';
 import '../login_page.dart';
 import 'package:intl/intl.dart';
